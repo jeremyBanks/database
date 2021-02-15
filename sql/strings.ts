@@ -71,13 +71,15 @@ export const encodeSqliteIdentifier = (
   return new SQLExpression([encoded]);
 };
 
-export type SQLInterpolated<Meta extends driver.DriverMetaBase = driver.DriverMetaBase> = Meta["Value"] | SQLExpression<Meta> | {
+export type SQLInterpolated<
+  Meta extends driver.DriverMetaBase = driver.DriverMetaBase,
+> = Meta["Value"] | SQLExpression<Meta> | {
   [toSQL](): SQLInterpolated<Meta>;
 };
 
-export class SQLExpression<Meta extends driver.DriverMetaBase = driver.DriverMetaBase>
-  implements driver.Query<Meta>
-{
+export class SQLExpression<
+  Meta extends driver.DriverMetaBase = driver.DriverMetaBase,
+> implements driver.Query<Meta> {
   constructor(
     readonly literalSql: string[] = [""],
     readonly sqlParams: Meta["Value"][] = [],
@@ -98,12 +100,10 @@ export class SQLExpression<Meta extends driver.DriverMetaBase = driver.DriverMet
 
 // Generic identifiers is like a motivating case but it's a hard one.
 
-
-
 /**
  * Tag function constructing a SQLExpression with bound interpolated values.
  */
-export const SQL = <Meta extends driver.DriverMetaBase = driver.DriverMetaBase> (
+export const SQL = <Meta extends driver.DriverMetaBase = driver.DriverMetaBase>(
   strings: TemplateStringsArray,
   ...values: SQLInterpolated[]
 ): SQLExpression<Meta> => {
