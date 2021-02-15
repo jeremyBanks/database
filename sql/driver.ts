@@ -12,13 +12,11 @@ export interface BaseMeta {
   SourceName: string;
 }
 
-export type Driver<Meta extends BaseMeta = BaseMeta> =
-  Partial<
-    & Opener<Meta>
-    & OpenerSync<Meta>
-    & IdentifierEncoder<Meta>
-  >;
-
+export type Driver<Meta extends BaseMeta = BaseMeta> = Partial<
+  & Opener<Meta>
+  & OpenerSync<Meta>
+  & IdentifierEncoder<Meta>
+>;
 
 export interface Opener<Meta extends BaseMeta = BaseMeta> {
   open(path: string): Promise<Connection<Meta>>;
@@ -32,12 +30,16 @@ export type Connection<Meta extends BaseMeta = BaseMeta> =
     & QueryerSync<Meta>
   >;
 
-export type Rows<Meta extends BaseMeta = BaseMeta> = Iterable<Iterable<Meta["Value"]>>;
-export type AsyncRows<Meta extends BaseMeta = BaseMeta> = AsyncIterable<Iterable<Meta["Value"]>>;
+export type Rows<Meta extends BaseMeta = BaseMeta> = Iterable<
+  Iterable<Meta["Value"]>
+>;
+export type AsyncRows<Meta extends BaseMeta = BaseMeta> = AsyncIterable<
+  Iterable<Meta["Value"]>
+>;
 
 export type Driverer<Meta extends BaseMeta = BaseMeta> = {
-  driver(): Driver<Meta>
-}
+  driver(): Driver<Meta>;
+};
 
 export interface IdentifierEncoder<Meta extends BaseMeta = BaseMeta> {
   encodeIdentifier(identifier: string): string;
@@ -47,16 +49,18 @@ interface MetaDefaults extends BaseMeta {
   sqlDialectName: any;
   Value: null | boolean | number | string;
   SourceName: string;
-};
+}/** Used internally to generate *Sync variants of async interfaces. */
 
-/** Used internally to generate *Sync variants of async interfaces. */
 type Sync<T> = {
-  [K in string & keyof T as `${K}Sync`]:
-    T[K] extends (...args: infer Args) => Promise<infer Result> ? ((...args: Args) => Result) :
-    T[K] extends (...args: infer Args) => AsyncIterable<infer Result> ? ((...args: Args) => Iterable<Result>) :
-    never
+  [K in string & keyof T]: T[K] extends
+    (...args: infer Args) => AsyncRows<infer Result>
+    ? ((...args: Args) => Rows<Result>)
+    : T[K] extends (...args: infer Args) => Promise<infer Result>
+      ? ((...args: Args) => Result)
+    : T[K] extends (...args: infer Args) => AsyncIterable<infer Result>
+      ? ((...args: Args) => Iterable<Result>)
+    : never;
 };
-
 
 export interface Queryer<Meta extends BaseMeta = BaseMeta> {
   query(query: string, values: Array<Meta["Value"]>): AsyncRows<Meta>;
@@ -64,11 +68,9 @@ export interface Queryer<Meta extends BaseMeta = BaseMeta> {
 
 export type QueryerSync<Meta extends BaseMeta = BaseMeta> = Sync<Queryer<Meta>>;
 
-
 export type Meta<Opts extends Partial<BaseMeta>> =
   & {
-    [Key in keyof BaseMeta]: undefined extends Opts[Key]
-      ? MetaDefaults[Key]
+    [Key in keyof BaseMeta]: undefined extends Opts[Key] ? MetaDefaults[Key]
       : Opts[Key];
   }
   & (
@@ -78,4 +80,3 @@ export type Meta<Opts extends Partial<BaseMeta>> =
     }
     & any
   );
-
