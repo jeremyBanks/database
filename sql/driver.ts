@@ -1,7 +1,7 @@
 /** @fileoverview Package driver defines interfaces to be implemented by database drivers as used by package `x/database/sql`.
  */
 
-export interface MetaBase {
+export interface BaseMeta {
   /** The name of the SQL dialect being used, as a lowercase string.
     * This should not vary across different drivers for the same server.
     */
@@ -12,79 +12,70 @@ export interface MetaBase {
   SourceName: string;
 }
 
-export type meta<D> = D extends Driver<infer M> ? M : never;
+export type Driver<Meta extends BaseMeta = BaseMeta> =
+  Partial<
+    & Opener<Meta>
+    & OpenerSync<Meta>
+    & IdentifierEncoder<Meta>
+  >;
 
-interface MetaDefaults extends MetaBase {
+
+export interface Opener<Meta extends BaseMeta = BaseMeta> {
+  open(path: string): Promise<Connection<Meta>>;
+}
+export type OpenerSync<Meta extends BaseMeta = BaseMeta> = Sync<Opener<Meta>>;
+
+export type Connection<Meta extends BaseMeta = BaseMeta> =
+  & Driverer<Meta>
+  & Partial<
+    & Queryer<Meta>
+    & QueryerSync<Meta>
+  >;
+
+export type Rows<Meta extends BaseMeta = BaseMeta> = Iterable<Iterable<Meta["Value"]>>;
+export type AsyncRows<Meta extends BaseMeta = BaseMeta> = AsyncIterable<Iterable<Meta["Value"]>>;
+
+export type Driverer<Meta extends BaseMeta = BaseMeta> = {
+  driver(): Driver<Meta>
+}
+
+export interface IdentifierEncoder<Meta extends BaseMeta = BaseMeta> {
+  encodeIdentifier(identifier: string): string;
+}
+
+interface MetaDefaults extends BaseMeta {
   sqlDialectName: any;
   Value: null | boolean | number | string;
   SourceName: string;
+};
+
+/** Used internally to generate *Sync variants of async interfaces. */
+type Sync<T> = {
+  [K in string & keyof T as `${K}Sync`]:
+    T[K] extends (...args: infer Args) => Promise<infer Result> ? ((...args: Args) => Result) :
+    T[K] extends (...args: infer Args) => AsyncIterable<infer Result> ? ((...args: Args) => Iterable<Result>) :
+    never
+};
+
+
+export interface Queryer<Meta extends BaseMeta = BaseMeta> {
+  query(query: string, values: Array<Meta["Value"]>): AsyncRows<Meta>;
 }
 
-export type Meta<Opts extends Partial<MetaBase>> =
+export type QueryerSync<Meta extends BaseMeta = BaseMeta> = Sync<Queryer<Meta>>;
+
+
+export type Meta<Opts extends Partial<BaseMeta>> =
   & {
-    [Key in keyof MetaBase]: undefined extends Opts[Key]
+    [Key in keyof BaseMeta]: undefined extends Opts[Key]
       ? MetaDefaults[Key]
       : Opts[Key];
   }
   & (
     & {
-      [UnexpectedKey in string & Exclude<keyof Opts, keyof MetaBase>]:
+      [UnexpectedKey in string & Exclude<keyof Opts, keyof BaseMeta>]:
         `Invalid Meta option: ${UnexpectedKey}`;
     }
     & any
   );
 
-export interface Query<Meta extends MetaBase> {
-  query: string;
-  args?: Array<Meta["Value"]>;
-}
-
-export type driver<Opts extends Partial<MetaBase>> = Driver<Meta<Opts>>;
-
-// OHHH
-
-// this is not something drivers need to be aware of!
-
-// except in as much as it needs to use an interpolation syntax that's
-// compatible with a given driver... but maybe ? is compatible with all of them?
-
-export interface QueryNamed<Meta extends MetaBase> {
-  query: string;
-  opts?: Record<string, Meta["Value"]>;
-}
-
-export interface Driver<Meta extends MetaBase = MetaBase>
-  extends
-    Partial<
-      & Opener<Meta>
-      & OpenerSync<Meta>
-      & Queryer<Meta>
-      & QueryerSync<Meta>
-      & IdentifierEncoder<Meta>
-    > {}
-
-export interface Connection<Meta extends MetaBase = MetaBase> {
-}
-
-export class Connection {
-}
-
-export interface Opener<Meta extends MetaBase = MetaBase> {
-  open(path: string): Promise<Connection<Meta>>;
-}
-
-export interface OpenerSync<Meta extends MetaBase = MetaBase> {
-  openSync(path: string): void; //ConnectionSync<Meta>;
-}
-
-export type Queryer<Meta extends MetaBase = MetaBase> = {
-  query(query: Query<Meta>): null;
-};
-
-// export type Opener = {
-
-// };
-
-// // & Partial<Queryer>;
-
-// export type DefaultValue = null | number | string;
