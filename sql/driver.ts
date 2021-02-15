@@ -1,7 +1,7 @@
 /** @fileoverview Package driver defines interfaces to be implemented by database drivers as used by package `x/database/sql`.
  */
 
-export interface DriverMetaBase {
+export interface MetaBase {
   /** The name of the SQL dialect being used, as a lowercase string.
     * This should not vary across different drivers for the same server.
     */
@@ -12,30 +12,34 @@ export interface DriverMetaBase {
   SourceName: string;
 }
 
-interface DriverMetaDefaults extends DriverMetaBase {
+export type meta<D> = D extends Driver<infer M> ? M : never;
+
+interface MetaDefaults extends MetaBase {
   sqlDialectName: any;
   Value: null | boolean | number | string;
   SourceName: string;
 }
 
-export type DriverMeta<Opts extends Partial<DriverMetaBase>> =
+export type Meta<Opts extends Partial<MetaBase>> =
   & {
-    [Key in keyof DriverMetaBase]: undefined extends Opts[Key]
-      ? DriverMetaDefaults[Key]
+    [Key in keyof MetaBase]: undefined extends Opts[Key]
+      ? MetaDefaults[Key]
       : Opts[Key];
   }
   & (
     & {
-      [UnexpectedKey in string & Exclude<keyof Opts, keyof DriverMetaBase>]:
-        `Invalid DriverMeta option: ${UnexpectedKey}`;
+      [UnexpectedKey in string & Exclude<keyof Opts, keyof MetaBase>]:
+        `Invalid Meta option: ${UnexpectedKey}`;
     }
     & any
   );
 
-export interface Query<Meta extends DriverMetaBase> {
+export interface Query<Meta extends MetaBase> {
   query: string;
   args?: Array<Meta["Value"]>;
 }
+
+export type driver<Opts extends Partial<MetaBase>> = Driver<Meta<Opts>>;
 
 // OHHH
 
@@ -44,46 +48,36 @@ export interface Query<Meta extends DriverMetaBase> {
 // except in as much as it needs to use an interpolation syntax that's
 // compatible with a given driver... but maybe ? is compatible with all of them?
 
-export interface QueryNamed<Meta extends DriverMetaBase> {
+export interface QueryNamed<Meta extends MetaBase> {
   query: string;
   opts?: Record<string, Meta["Value"]>;
 }
 
-export interface Driver<Meta extends DriverMetaBase = DriverMetaBase>
+export interface Driver<Meta extends MetaBase = MetaBase>
   extends
     Partial<
       & Opener<Meta>
       & OpenerSync<Meta>
       & Queryer<Meta>
+      & QueryerSync<Meta>
+      & IdentifierEncoder<Meta>
     > {}
 
-export default new class Sqlite implements
-  Driver<
-    DriverMeta<{
-      sqlDialectName: "sqlite";
-      Value: null | boolean | number | string | bigint | Uint8Array;
-    }>
-  > {
-  async open(_path: string) {
-    return new Connection();
-  }
-}();
-
-export interface Connection<Meta extends DriverMetaBase = DriverMetaBase> {
+export interface Connection<Meta extends MetaBase = MetaBase> {
 }
 
 export class Connection {
 }
 
-export interface Opener<Meta extends DriverMetaBase = DriverMetaBase> {
+export interface Opener<Meta extends MetaBase = MetaBase> {
   open(path: string): Promise<Connection<Meta>>;
 }
 
-export interface OpenerSync<Meta extends DriverMetaBase = DriverMetaBase> {
+export interface OpenerSync<Meta extends MetaBase = MetaBase> {
   openSync(path: string): void; //ConnectionSync<Meta>;
 }
 
-export type Queryer<Meta extends DriverMetaBase = DriverMetaBase> = {
+export type Queryer<Meta extends MetaBase = MetaBase> = {
   query(query: Query<Meta>): null;
 };
 
