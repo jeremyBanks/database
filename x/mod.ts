@@ -15,6 +15,6 @@ export function openConnection(
   }
 
   throw new Error(`unrecognized driverName: ${driverName}`);
-}/** alias for rename from Go API */
+} /** alias for rename from Go API */
 
 export const DB = Database;
