@@ -43,6 +43,7 @@ export type WithDriver<Meta extends BaseMeta = BaseMeta> = {
 
 export interface IdentifierEncoder<Meta extends BaseMeta = BaseMeta> {
   encodeIdentifier(identifier: string, opts?: {
+    context?: 'column' | 'table' | 'database'
     allowWeird?: boolean,
     allowInternal?: boolean
   }): string;
