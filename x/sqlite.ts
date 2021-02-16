@@ -1,15 +1,17 @@
 import * as sqlite from "https://deno.land/x/sqlite@v2.3.2/mod.ts";
 
-import * as driver from "../sql/driver.ts";
+import * as sql from "../sql/driver.ts";
 
 type Value = null | boolean | number | string | bigint | Uint8Array;
 
-export type Meta = driver.Meta<{
+export type Meta = sql.Meta<{
   sqlDialectName: "sqlite",
   Value: Value,
 }>;
 
-export class Driver implements driver.Driver<Meta> {
+export class Driver implements sql.Driver<Meta> {
+  constructor() {}
+
   openSync(path: string) {
     return new Connection(this, path);
   }
@@ -79,9 +81,9 @@ export class Driver implements driver.Driver<Meta> {
   }
 }
 
-export default new Driver();
+export const driver = new Driver();
 
-export class Connection implements driver.Connection<Meta> {
+export class Connection implements sql.Connection<Meta> {
   constructor(
     readonly driver: Driver,
     private path: string,
