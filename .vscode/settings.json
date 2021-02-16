@@ -16,5 +16,8 @@
     "titleBar.inactiveBackground": "#8571bd99",
     "titleBar.inactiveForeground": "#e7e7e799"
   },
-  "peacock.remoteColor": "#8571bd"
+  "peacock.remoteColor": "#8571bd",
+  "deno.import_intellisense_origins": {
+    "https://deno.land": true
+  }
 }

@@ -12,11 +12,11 @@ export interface BaseMeta {
   SourceName: string;
 }
 
-export type Driver<Meta extends BaseMeta = BaseMeta> = Partial<
+export interface Driver<Meta extends BaseMeta = BaseMeta> extends Partial<
   & Opener<Meta>
   & OpenerSync<Meta>
   & IdentifierEncoder<Meta>
->;
+> {};
 
 export interface Opener<Meta extends BaseMeta = BaseMeta> {
   open(path: string): Promise<Connection<Meta>>;
@@ -24,7 +24,7 @@ export interface Opener<Meta extends BaseMeta = BaseMeta> {
 export type OpenerSync<Meta extends BaseMeta = BaseMeta> = Sync<Opener<Meta>>;
 
 export type Connection<Meta extends BaseMeta = BaseMeta> =
-  & Driverer<Meta>
+  & WithDriver<Meta>
   & Partial<
     & Queryer<Meta>
     & QueryerSync<Meta>
@@ -37,12 +37,15 @@ export type AsyncRows<Meta extends BaseMeta = BaseMeta> = AsyncIterable<
   Iterable<Meta["Value"]>
 >;
 
-export type Driverer<Meta extends BaseMeta = BaseMeta> = {
-  driver(): Driver<Meta>;
+export type WithDriver<Meta extends BaseMeta = BaseMeta> = {
+  driver: Driver<Meta>;
 };
 
 export interface IdentifierEncoder<Meta extends BaseMeta = BaseMeta> {
-  encodeIdentifier(identifier: string): string;
+  encodeIdentifier(identifier: string, opts?: {
+    allowWeird?: boolean,
+    allowInternal?: boolean
+  }): string;
 }
 
 interface MetaDefaults extends BaseMeta {
@@ -52,7 +55,7 @@ interface MetaDefaults extends BaseMeta {
 }/** Used internally to generate *Sync variants of async interfaces. */
 
 type Sync<T> = {
-  [K in string & keyof T]: T[K] extends
+  [K in string & keyof T as `${K}Sync`]: T[K] extends
     (...args: infer Args) => AsyncRows<infer Result>
     ? ((...args: Args) => Rows<Result>)
     : T[K] extends (...args: infer Args) => Promise<infer Result>
@@ -76,7 +79,7 @@ export type Meta<Opts extends Partial<BaseMeta>> =
   & (
     & {
       [UnexpectedKey in string & Exclude<keyof Opts, keyof BaseMeta>]:
-        `Invalid Meta option: ${UnexpectedKey}`;
+        `Invalid driver.Meta option: ${UnexpectedKey}`;
     }
     & any
   );
