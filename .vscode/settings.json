@@ -2,5 +2,22 @@
   "deno.enable": true,
   "deno.import_intellisense_origins": {
     "https://deno.land": true
-  }
+  },
+  "workbench.colorCustomizations": {
+    "activityBar.activeBackground": "#85b7fc",
+    "activityBar.activeBorder": "#da055f",
+    "activityBar.background": "#85b7fc",
+    "activityBar.foreground": "#15202b",
+    "activityBar.inactiveForeground": "#15202b99",
+    "activityBarBadge.background": "#da055f",
+    "activityBarBadge.foreground": "#e7e7e7",
+    "statusBar.background": "#539afb",
+    "statusBar.foreground": "#15202b",
+    "statusBarItem.hoverBackground": "#217dfa",
+    "titleBar.activeBackground": "#539afb",
+    "titleBar.activeForeground": "#15202b",
+    "titleBar.inactiveBackground": "#539afb99",
+    "titleBar.inactiveForeground": "#15202b99"
+  },
+  "peacock.color": "#539afb"
 }

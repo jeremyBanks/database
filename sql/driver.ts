@@ -18,7 +18,7 @@ export interface Driver<Meta extends BaseMeta = BaseMeta> extends
   > {}
 
 export interface Opener<Meta extends BaseMeta = BaseMeta> {
-  open(path: string, options: {context: Context}): Promise<Connection<Meta>>;
+  open(path: string, options: { context: Context }): Promise<Connection<Meta>>;
 }
 export type OpenerSync<Meta extends BaseMeta = BaseMeta> = Sync<Opener<Meta>>;
 
@@ -54,8 +54,9 @@ interface MetaDefaults extends BaseMeta {
   SourceName: string;
 } /** Used internally to generate *Sync variants of async interfaces. */
 
+// deno-fmt-ignore (due to a current bug that deletes the `as` clause)
 type Sync<T> = {
-  [K in string & keyof T]: T[K] extends
+  [K in string & keyof T as `${K}Sync`]: T[K] extends
     (...args: infer Args) => AsyncRows<infer Result>
     ? ((...args: Args) => Rows<Result>)
     : T[K] extends (...args: infer Args) => Promise<infer Result>
@@ -65,8 +66,10 @@ type Sync<T> = {
     : never;
 };
 
+export type Supporting<T> = (Driver & T) | (Driver & Sync<T>);
+
 export interface Preparer<Meta extends BaseMeta = BaseMeta> {
-  prepare(query: string): Statement<Meta>,
+  prepare(query: string): Statement<Meta>;
 }
 
 export interface Statement<Meta extends BaseMeta = BaseMeta> {
@@ -74,13 +77,16 @@ export interface Statement<Meta extends BaseMeta = BaseMeta> {
 }
 
 export interface Queryer<Meta extends BaseMeta = BaseMeta> {
-  query(query: string, values: Array<Meta["Value"]>, options: {context: Context}): AsyncRows<Meta>;
+  query(
+    query: string,
+    values: Array<Meta["Value"]>,
+    options: { context: Context },
+  ): AsyncRows<Meta>;
 }
 
 export type QueryerSync<Meta extends BaseMeta = BaseMeta> = Sync<Queryer<Meta>>;
 
-export type Meta<Opts extends Partial<BaseMeta>> =
-  & {
-    [Key in keyof BaseMeta]: undefined extends Opts[Key] ? MetaDefaults[Key]
-      : Opts[Key];
-  };
+export type Meta<Opts extends Partial<BaseMeta>> = {
+  [Key in keyof BaseMeta]: undefined extends Opts[Key] ? MetaDefaults[Key]
+    : Opts[Key];
+};
