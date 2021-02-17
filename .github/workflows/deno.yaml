@@ -64,6 +64,10 @@ jobs:
           if [[ ${#short_subject} -gt 50 ]]; then
             short_subject="${short_subject:0:49}…"
           fi
+          declare suffixed_subject=" (${short_subject})"
+          if [[ -z "${short_subject// }" ]]; then
+            suffixed_subject=""
+          fi
           declare author_name="$(git log -1 --pretty=format:'%an')"
           declare author_email="$(git log -1 --pretty=format:'%ae')"
           declare current_action_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${{ github.run_id }}"
@@ -77,7 +81,7 @@ jobs:
           git remote add origin "https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
           git checkout "${branch}"
           git add .
-          git commit -m "⚙️ rebuild ${short_hash} (${short_subject})${br}${br}${current_action_url}"
+          git commit -m "⚙️ rebuild ${short_hash} ${suffixed_subject}${br}${br}${current_action_url}"
           git push --set-upstream origin "${branch}"
 
       - name: fail if source files modified during build but this action cannot push

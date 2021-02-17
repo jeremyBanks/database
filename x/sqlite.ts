@@ -5,8 +5,8 @@ import * as sql from "../sql/driver.ts";
 type Value = null | boolean | number | string | bigint | Uint8Array;
 
 export type Meta = sql.Meta<{
-  sqlDialectName: "sqlite",
-  Value: Value,
+  sqlDialectName: "sqlite";
+  Value: Value;
 }>;
 
 export class Driver implements sql.Driver<Meta> {
@@ -17,10 +17,9 @@ export class Driver implements sql.Driver<Meta> {
   }
 
   encodeIdentifier(identifier: string, opts?: {
-      allowWeird?: boolean;
-      allowInternal?: boolean;
-    },
-  ): string {
+    allowWeird?: boolean;
+    allowInternal?: boolean;
+  }): string {
     const allowWeird = opts?.allowWeird ?? true;
     const allowInternal = opts?.allowInternal ?? false;
 

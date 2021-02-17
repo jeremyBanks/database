@@ -12,11 +12,12 @@ export interface BaseMeta {
   SourceName: string;
 }
 
-export interface Driver<Meta extends BaseMeta = BaseMeta> extends Partial<
-  & Opener<Meta>
-  & OpenerSync<Meta>
-  & IdentifierEncoder<Meta>
-> {};
+export interface Driver<Meta extends BaseMeta = BaseMeta> extends
+  Partial<
+    & Opener<Meta>
+    & OpenerSync<Meta>
+    & IdentifierEncoder<Meta>
+  > {}
 
 export interface Opener<Meta extends BaseMeta = BaseMeta> {
   open(path: string): Promise<Connection<Meta>>;
@@ -43,9 +44,9 @@ export type WithDriver<Meta extends BaseMeta = BaseMeta> = {
 
 export interface IdentifierEncoder<Meta extends BaseMeta = BaseMeta> {
   encodeIdentifier(identifier: string, opts?: {
-    context?: 'column' | 'table' | 'database'
-    allowWeird?: boolean,
-    allowInternal?: boolean
+    context?: "column" | "table" | "database";
+    allowWeird?: boolean;
+    allowInternal?: boolean;
   }): string;
 }
 
@@ -53,10 +54,10 @@ interface MetaDefaults extends BaseMeta {
   sqlDialectName: any;
   Value: null | boolean | number | string;
   SourceName: string;
-}/** Used internally to generate *Sync variants of async interfaces. */
+} /** Used internally to generate *Sync variants of async interfaces. */
 
 type Sync<T> = {
-  [K in string & keyof T as `${K}Sync`]: T[K] extends
+  [K in string & keyof T]: T[K] extends
     (...args: infer Args) => AsyncRows<infer Result>
     ? ((...args: Args) => Rows<Result>)
     : T[K] extends (...args: infer Args) => Promise<infer Result>
