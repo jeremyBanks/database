@@ -1,15 +1,13 @@
 /** @fileoverview Package driver defines interfaces to be implemented by database drivers as used by package `x/database/sql`.
+ * 
+ * Inspired by https://golang.org/src/database/sql/driver/driver.go.
  */
 
+import Context from "../_common/context.ts";
+
 export interface BaseMeta {
-  /** The name of the SQL dialect being used, as a lowercase string.
-    * This should not vary across different drivers for the same server.
-    */
-  sqlDialectName: string | "sqlite" | "mysql" | "postgresql" | "tsql";
   /** The allowed types for Values passed into or returned from this driver. */
   Value: unknown;
-  /** May be used if the driver wants to restrict source to a string subtype. */
-  SourceName: string;
 }
 
 export interface Driver<Meta extends BaseMeta = BaseMeta> extends
@@ -20,7 +18,7 @@ export interface Driver<Meta extends BaseMeta = BaseMeta> extends
   > {}
 
 export interface Opener<Meta extends BaseMeta = BaseMeta> {
-  open(path: string): Promise<Connection<Meta>>;
+  open(path: string, options: {context: Context}): Promise<Connection<Meta>>;
 }
 export type OpenerSync<Meta extends BaseMeta = BaseMeta> = Sync<Opener<Meta>>;
 
@@ -67,8 +65,16 @@ type Sync<T> = {
     : never;
 };
 
+export interface Preparer<Meta extends BaseMeta = BaseMeta> {
+  prepare(query: string): Statement<Meta>,
+}
+
+export interface Statement<Meta extends BaseMeta = BaseMeta> {
+  query(values: Array<Meta["Value"]>): AsyncRows<Meta>;
+}
+
 export interface Queryer<Meta extends BaseMeta = BaseMeta> {
-  query(query: string, values: Array<Meta["Value"]>): AsyncRows<Meta>;
+  query(query: string, values: Array<Meta["Value"]>, options: {context: Context}): AsyncRows<Meta>;
 }
 
 export type QueryerSync<Meta extends BaseMeta = BaseMeta> = Sync<Queryer<Meta>>;
@@ -77,11 +83,4 @@ export type Meta<Opts extends Partial<BaseMeta>> =
   & {
     [Key in keyof BaseMeta]: undefined extends Opts[Key] ? MetaDefaults[Key]
       : Opts[Key];
-  }
-  & (
-    & {
-      [UnexpectedKey in string & Exclude<keyof Opts, keyof BaseMeta>]:
-        `Invalid driver.Meta option: ${UnexpectedKey}`;
-    }
-    & any
-  );
+  };
