@@ -1,21 +1,5 @@
 {
   "deno.enable": true,
-  "workbench.colorCustomizations": {
-    "activityBar.activeBackground": "#49387a",
-    "activityBar.activeBorder": "#000000",
-    "activityBar.background": "#49387a",
-    "activityBar.foreground": "#e7e7e7",
-    "activityBar.inactiveForeground": "#e7e7e799",
-    "activityBarBadge.background": "#000000",
-    "activityBarBadge.foreground": "#e7e7e7",
-    "statusBar.background": "#342857",
-    "statusBar.foreground": "#e7e7e7",
-    "statusBarItem.hoverBackground": "#49387a",
-    "titleBar.activeBackground": "#342857",
-    "titleBar.activeForeground": "#e7e7e7",
-    "titleBar.inactiveBackground": "#34285799",
-    "titleBar.inactiveForeground": "#e7e7e799"
-  },
   "peacock.remoteColor": "#342857",
   "deno.import_intellisense_origins": {
     "https://deno.land": true

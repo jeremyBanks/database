@@ -8,8 +8,6 @@ inspired by Go's [`database/sql`](https://pkg.go.dev/database/sql) and
 
 # 0.1
 
-
-
 # 0.3
 
-  - `x/database/context`
+- `x/database/context`
