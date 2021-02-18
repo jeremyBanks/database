@@ -1,3 +1,7 @@
+/**
+ * A driver implementation that returns dummy values and doesn't store anything.
+ */
+
 import * as sql from "../sql/driver.ts";
 
 type Meta = sql.Meta<{

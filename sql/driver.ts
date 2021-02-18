@@ -10,6 +10,7 @@ export interface BaseMeta {
   Value: unknown;
 }
 
+// deno-lint-ignore no-empty-interface
 export interface Driver<Meta extends BaseMeta = BaseMeta> extends
   Partial<
     & Opener<Meta>
@@ -18,9 +19,15 @@ export interface Driver<Meta extends BaseMeta = BaseMeta> extends
   > {}
 
 export interface Opener<Meta extends BaseMeta = BaseMeta> {
-  open(path: string, options: { context: Context }): Promise<Connection<Meta>>;
+  open(
+    path: string,
+    options?: { context?: Context },
+  ): Promise<Connection<Meta>>;
 }
-export type OpenerSync<Meta extends BaseMeta = BaseMeta> = Sync<Opener<Meta>>;
+
+export interface OpenerSync<Meta extends BaseMeta = BaseMeta> {
+  openSync(path: string, options?: { context?: Context }): Connection<Meta>;
+}
 
 export type Connection<Meta extends BaseMeta = BaseMeta> =
   & WithDriver<Meta>
@@ -29,10 +36,10 @@ export type Connection<Meta extends BaseMeta = BaseMeta> =
     & QueryerSync<Meta>
   >;
 
-export type Rows<Meta extends BaseMeta = BaseMeta> = Iterable<
+export type RowsSync<Meta extends BaseMeta = BaseMeta> = Iterable<
   Iterable<Meta["Value"]>
 >;
-export type AsyncRows<Meta extends BaseMeta = BaseMeta> = AsyncIterable<
+export type Rows<Meta extends BaseMeta = BaseMeta> = AsyncIterable<
   Iterable<Meta["Value"]>
 >;
 
@@ -51,39 +58,23 @@ export interface IdentifierEncoder<Meta extends BaseMeta = BaseMeta> {
 interface MetaDefaults extends BaseMeta {
   Value: null | boolean | number | string;
   SourceName: string;
-} /** Used internally to generate *Sync variants of async interfaces. */
-
-// deno-fmt-ignore (due to a current bug that deletes the `as` clause)
-type Sync<T> = {
-  [K in string & keyof T as `${K}Sync`]: T[K] extends
-    (...args: infer Args) => AsyncRows<infer Result>
-    ? ((...args: Args) => Rows<Result>)
-    : T[K] extends (...args: infer Args) => Promise<infer Result>
-      ? ((...args: Args) => Result)
-    : T[K] extends (...args: infer Args) => AsyncIterable<infer Result>
-      ? ((...args: Args) => Iterable<Result>)
-    : never;
-};
-
-export type Supporting<T> = (Driver & T) | (Driver & Sync<T>);
-
-export interface Preparer<Meta extends BaseMeta = BaseMeta> {
-  prepare(query: string): Statement<Meta>;
-}
-
-export interface Statement<Meta extends BaseMeta = BaseMeta> {
-  query(values: Array<Meta["Value"]>): AsyncRows<Meta>;
 }
 
 export interface Queryer<Meta extends BaseMeta = BaseMeta> {
   query(
     query: string,
     values: Array<Meta["Value"]>,
-    options: { context: Context },
-  ): AsyncRows<Meta>;
+    options?: { context?: Context },
+  ): Rows<Meta>;
 }
 
-export type QueryerSync<Meta extends BaseMeta = BaseMeta> = Sync<Queryer<Meta>>;
+export interface QueryerSync<Meta extends BaseMeta = BaseMeta> {
+  querySync(
+    query: string,
+    values: Array<Meta["Value"]>,
+    options?: { context?: Context },
+  ): RowsSync<Meta>;
+}
 
 export type Meta<Opts extends Partial<BaseMeta>> = {
   [Key in keyof BaseMeta]: undefined extends Opts[Key] ? MetaDefaults[Key]

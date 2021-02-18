@@ -88,7 +88,11 @@ export class Connection implements sql.Connection<Meta> {
 
   private inner = new sqlite.DB(this.path);
 
-  querySync(sql: string, values: Array<Value>) {
+  querySync(
+    sql: string,
+    values: Array<Value>,
+    context: unknown,
+  ): sql.RowsSync<Meta> {
     return this.inner.query(sql, values);
   }
 }

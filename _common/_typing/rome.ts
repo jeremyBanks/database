@@ -1,5 +1,6 @@
 // Copyright Facebook Inc and Sebastian McKenzie, used under the MIT license.
 // https://github.com/rome/tools/blob/main/internal/typescript-helpers/index.ts
+// deno-lint-ignore-file
 
 type VoidReturn = void | undefined;
 
