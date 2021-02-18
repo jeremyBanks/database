@@ -28,7 +28,7 @@ await database.exec(SQL`
   );
 `);
 
-await database.transaction(async transaction => {
+await database.transaction(async (transaction) => {
   for (
     const name of [
       "Dalinar",
@@ -48,6 +48,11 @@ for await (
 ) {
   console.log(id, name);
 }
+
+const dynamicColumnName = Math.random() < 0.5 ? "Id" : "Name";
+const column = SQL.identifier(dynamicColumnName);
+const [value] = await database.queryRow(SQL`SELECT ${column} FROM Users`);
+console.log(`${dynamicColumnName} is ${value}`);
 ```
 
 ## Driver Module Implementation

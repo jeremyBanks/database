@@ -39,5 +39,10 @@ Deno.test({
     ) {
       console.log(id, name);
     }
+
+    const dynamicColumnName = Math.random() < 0.5 ? "Id" : "Name";
+    const column = SQL.identifier(dynamicColumnName);
+    const [value] = await database.queryRow(SQL`SELECT ${column} FROM Users`);
+    console.log(`${dynamicColumnName} is ${value}`);
   },
 });
