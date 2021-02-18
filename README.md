@@ -1,6 +1,6 @@
 # x/database
 
-https://deno.land/x/database
+https://deno.land/x/database@0.1.0
 
 **x/database** provides abstract TypeScript interfaces for databases in [Deno],
 inspired by Go's [**database**](https://pkg.go.dev/database) package.
@@ -25,7 +25,7 @@ Stable releases are tagged with three-part [semver] version numbers such as
 
 [semver]: https://semver.org/spec/v2.0.0.html
 
-Strong type parameters can be valuable, but they should prefer unobtrusive
+Flexible type parameters can be valuable, but they should prefer unobtrusive
 defaults.
 
 ## License
