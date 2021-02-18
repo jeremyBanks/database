@@ -1,26 +1,26 @@
-import { assert } from "https://deno.land/std@0.87.0/testing/asserts.ts";
-
-import * as driver from "./sql/driver.ts";
-import * as sql from "./sql/sql.ts";
-import * as strings from "./sql/strings.ts";
-
-Deno.test({
-  name: `import * as driver from "./sql/driver.ts"`,
-  fn() {
-    assert(driver);
-  },
-});
+import "./sql/driver.ts";
+import * as sql "./sql/sql.ts";
+import {SQL} from "./sql/strings.ts";
+import * as sqlite from "./x/sqlite.ts";
 
 Deno.test({
-  name: `import * as sql from "./sql/sql.ts"`,
-  fn() {
-    assert(sql);
-  },
-});
+  name: "example",
+  async fn() {
+    const db = sql.open(":memory:", sqlite);
 
-Deno.test({
-  name: `import * as strings from "./sql/strings.ts"`,
-  fn() {
-    assert(strings);
-  },
-});
+    const Users = SQL.identifier("Users");
+
+    const columnNames = [ "firstName", "lastName" ]
+    const columns = columnsNames.map(name =>
+      SQL`${SQL.identifier(name)} varchar(32)`
+    );
+    await db.connect().use(async connection => {
+      await connection.exec(SQL`
+        CREATE TABLE IF NOT EXISTS
+        ${Users} (
+          ${SQL`, `.joining(columns)}
+        )
+      `);
+    });
+  }
+})
