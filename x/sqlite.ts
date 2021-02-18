@@ -49,9 +49,7 @@ export class Driver implements sql.Driver<Meta> {
       encoded = "`" + identifier.replace(/`/g, "``") + "`";
     }
 
-    // We quote all identifiers to avoid potential conflict with keywords, but
-    // if you're using a name that syntactically *requires* quoting, that's weird.
-    const identifierIsWeird = !/^[a-z_][a-z_0-9]*$/i.test(identifier);
+    const identifierIsWeird = !/^[A-Za-z_][A-Za-z_0-9]{0,63}$/.test(identifier);
     if (identifierIsWeird && !allowWeird) {
       throw new TypeError(
         `Weird SQL identifier ${
