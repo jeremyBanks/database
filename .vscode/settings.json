@@ -3,5 +3,7 @@
   "deno.import_intellisense_origins": {
     "https://deno.land": true
   },
-  "peacock.color": "#539afb"
+  "peacock.color": "#539afb",
+  "deno.lint": true,
+  "deno.unstable": true
 }
