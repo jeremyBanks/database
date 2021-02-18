@@ -2,12 +2,31 @@
 
 https://deno.land/x/database
 
-**x/database** provides an abstract interfaces for databases in Deno, inspired by
-Go's [**database**](https://pkg.go.dev/database) package.
+**x/database** provides abstract TypeScript interfaces for databases in [Deno],
+inspired by Go's [**database**](https://pkg.go.dev/database) package.
+
+[Deno]: https://deno.land/
 
 ## Modules
 
 - [**x/database/sql**](./sql/)
+
+## Style
+
+Use `deno fmt`. Use `// deno-fmt-ignore` sparingly.
+
+You may use `deno --unstable lint` if you feel like it. Use
+`// deno-lint-ignore` liberally.
+
+SQL is CamelCased as `SQL`, not `Sql`.
+
+Stable releases are tagged with three-part [semver] version numbers such as
+`2.1.0`, not `v2.1.0` or `2.1`.
+
+[semver]: https://semver.org/spec/v2.0.0.html
+
+Strong type parameters can be valuable, but they should prefer unobtrusive
+defaults.
 
 ## License
 
