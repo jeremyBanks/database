@@ -3,6 +3,7 @@ import "../sql/driver.ts";
 
 Deno.test({
   name: "aspirational example",
+  ignore: true,
   async fn() {
     await (Deno as any)?.permissions?.request({ name: "read" });
 

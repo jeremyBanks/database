@@ -58,25 +58,27 @@ console.log(`${dynamicColumnName} is ${value}`);
 ## Driver Module Implementation
 
 ```ts
-import driver from "https://deno.land/x/database@0.1.0/driver.ts";
+import * as sql from "https://deno.land/x/database@0.1.0/sql/driver.ts";
 
-
-const Meta = driver.Meta<{
+const Meta = sql.Meta<{
   // Type of values bound and returned by this Driver.
   Value: string | number | boolean | null
 }>;
 
-export const driver = class implements driver.Driver<Meta> {
+class Driver implements sql.Driver<Meta> {
   async open(path: string): Promise<Connection> {
     // ...
   }
   // and/or
-  async openSync(path: string): Connection {
+  openSync(path: string): Connection {
     // ...
   }
 };
 
-class Connection implements driver.Connection<Meta> {
+// This is the only required export, any others are up to you.
+export const driver = new Driver();
+
+class Connection implements sql.Connection<Meta> {
   // ...
 }
 ```
