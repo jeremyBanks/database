@@ -1,5 +1,5 @@
 /** @fileoverview Package driver defines interfaces to be implemented by database drivers as used by package `x/database/sql`.
- * 
+ *
  * Inspired by https://golang.org/src/database/sql/driver/driver.go.
  */
 
@@ -49,7 +49,6 @@ export interface IdentifierEncoder<Meta extends BaseMeta = BaseMeta> {
 }
 
 interface MetaDefaults extends BaseMeta {
-  sqlDialectName: any;
   Value: null | boolean | number | string;
   SourceName: string;
 } /** Used internally to generate *Sync variants of async interfaces. */
