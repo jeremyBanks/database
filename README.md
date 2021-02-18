@@ -2,12 +2,12 @@
 
 https://deno.land/x/database
 
-An abstract database package for Deno, inspired by Go's
-[`database`](https://pkg.go.dev/database) package.
+**x/database** provides an abstract interfaces for databases in Deno, inspired by
+Go's [**database**](https://pkg.go.dev/database) package.
 
 ## Modules
 
-- [`x/database/sql`](./sql/)
+- [**x/database/sql**](./sql/)
 
 ## License
 

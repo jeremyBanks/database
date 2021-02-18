@@ -34,7 +34,7 @@ export const open = async <
   return new Database<Meta, Driver>(driver, connection);
 };
 
-const db = open(':memory:', sqlite.driver)
+const db = open(":memory:", sqlite.driver);
 
 /**
  * `Database` is a database handle representing a pool of zero or more underlying connections.
