@@ -10,8 +10,6 @@ export type Meta = sql.Meta<{
 }>;
 
 export class Driver implements sql.Driver<Meta> {
-  constructor() {}
-
   openSync(path: string) {
     return new Connection(this, path);
   }
@@ -79,6 +77,9 @@ export class Driver implements sql.Driver<Meta> {
 }
 
 export const driver = new Driver();
+
+sql.register('sqlite', 'deno-sqlite', driver);
+sql.register('sqlite', 'deno-sqlite', driver);
 
 export class Connection implements sql.Connection<Meta> {
   constructor(
