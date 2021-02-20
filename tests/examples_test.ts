@@ -1,17 +1,27 @@
 // deno-lint-ignore-file no-explicit-any
-import "../sql/driver.ts";
+import * as sqlite from "../x/sqlite.ts";
+import * as sql from "../sql/sql.ts";
+import { SQL } from "../sql/strings.ts";
+
 
 Deno.test({
-  name: "aspirational example",
+  name: "sql.open().query()",
+  async fn() {
+    await (Deno as any)?.permissions?.request({ name: "read" });
+    
+    const database = await sql.open(":memory:", sqlite);
+    
+    
+  }
+});
+
+Deno.test({
+  name: "sql.open().exec(),transaction().exec(),query()",
   ignore: true,
   async fn() {
     await (Deno as any)?.permissions?.request({ name: "read" });
 
-    const sqlite = await import("./x/sqlite.ts" as any);
-    const sql = await import("./sql/sql.ts" as any);
-    const { SQL } = await import("./sql/strings.ts" as any);
-
-    const database = await sql.open(":memory:", sqlite);
+    const database = await sql.open(":memory:", sqlite) as any;
 
     await database.exec(SQL`
       CREATE TABLE User (
@@ -42,7 +52,7 @@ Deno.test({
     }
 
     const dynamicColumnName = Math.random() < 0.5 ? "Id" : "Name";
-    const column = SQL.identifier(dynamicColumnName);
+    const column = (SQL as any).identifier(dynamicColumnName);
     const [value] = await database.queryRow(SQL`SELECT ${column} FROM Users`);
     console.log(`${dynamicColumnName} is ${value}`);
   },

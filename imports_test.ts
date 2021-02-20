@@ -1,4 +1,4 @@
-import * as fs from "https://deno.land/std@0.87.0/fs/expand_glob.ts";
+import {fs} from "./_common/deps.ts";
 
 try {
   const cwd = Deno.cwd();
