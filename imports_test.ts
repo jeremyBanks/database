@@ -1,4 +1,4 @@
-import {fs} from "./_common/deps.ts";
+import { fs } from "./_common/deps.ts";
 
 try {
   const cwd = Deno.cwd();
