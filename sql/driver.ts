@@ -82,24 +82,3 @@ export type Meta<Opts extends Partial<BaseMeta>> = {
   [Key in keyof BaseMeta]: undefined extends Opts[Key] ? MetaDefaults[Key]
     : Opts[Key];
 };
-
-
-export const registry = new Map<string, {dialect: string, name: string, driver: Driver}>();
-
-// https://docs.sqlalchemy.org/en/14/core/engines.html#database-urls
-export const register = (dialect: string, name: string, driver: Driver) => {
-  if (!registry.has(dialect)) {
-    log.info(`Registering driver for: ${dialect}://…`);
-    registry.set(dialect, {dialect, name, driver});
-  } else {
-    log.info(`Ignoring additional driver registered for: ${dialect}://…`);
-  }
-
-  const qualified = `${dialect}+${name}`;
-  if (!registry.has(qualified)) {
-    log.info(`Registering driver for: ${qualified}://…`);
-    registry.set(qualified, {dialect, name, driver});
-  } else {
-    log.error(`Ignoring additional driver registered for: ${qualified}://…`);
-  }
-};

@@ -2,17 +2,17 @@
 import * as sqlite from "../x/sqlite.ts";
 import * as sql from "../sql/sql.ts";
 import { SQL } from "../sql/strings.ts";
-
+import { log } from "../_common/deps.ts";
 
 Deno.test({
   name: "sql.open().query()",
   async fn() {
     await (Deno as any)?.permissions?.request({ name: "read" });
-    
+
     const database = await sql.open(":memory:", sqlite);
-    
-    
-  }
+
+    log.info(database);
+  },
 });
 
 Deno.test({
