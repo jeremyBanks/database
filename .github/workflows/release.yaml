@@ -1,11 +1,11 @@
-name: Tag Release
+name: Release
 
 on:
   workflow_dispatch:
 
 jobs:
   release:
-    name: Tag Release
+    name: Release
     runs-on: ubuntu-20.04
     steps:
       - uses: actions/checkout@v2
@@ -34,7 +34,7 @@ jobs:
           echo "DENO_INSTALL=${DENO_INSTALL}" >> "${GITHUB_ENV}"
           echo "PATH=${PATH}" >> "${GITHUB_ENV}"
 
-      - name: create and push tag from ./version
+      - name: tag release using ./VERSION and merge it into trunk
         run: |
           declare br="
           "
@@ -49,8 +49,12 @@ jobs:
               Deno.exit(1);
             }
           ' "${version}"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config user.name "${{ github.actor }}"
-          declare current_action_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${{ github.run_id }}"
-          git tag "${version}" -a -m "v${version}${br}${br}${current_action_url}"
-          git push origin "${version}"
+
+          declare branch="$(echo ${GITHUB_REF#refs/heads/})"
+          git checkout "${branch}"
+          git remote rm origin
+          git remote add origin "https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch origin --tags --unshallow
+          git tag "${version}"
+          git push origin "${branch}":trunk
+          git push origin "${version}":"${version}"
