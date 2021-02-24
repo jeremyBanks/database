@@ -49,10 +49,8 @@ jobs:
               Deno.exit(1);
             }
           ' "${version}"
-          declare author_name="$(git log -1 --pretty=format:'%an')"
-          declare author_email="$(git log -1 --pretty=format:'%ae')"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "${{ github.actor }}"
           declare current_action_url="https://github.com/${GITHUB_REPOSITORY}/actions/runs/${{ github.run_id }}"
-          export GIT_TAGGER_NAME="${{ github.actor }}"
-          export GIT_TAGGER_EMAIL="41898282+github-actions[bot]@users.noreply.github.com"
           git tag "${version}" -a -m "v${version}${br}${br}${current_action_url}"
           git push origin "${version}"
