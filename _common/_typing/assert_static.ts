@@ -1,5 +1,4 @@
 export const assertStatic = undefined as unknown as Pass;
-export const ssertStatic = assertStatic;
 type Pass = [void];
 type Fail<T> = [[T]];
 
