@@ -6,6 +6,14 @@ export const toSQLExpression = Symbol("toSQLExpression");
 
 export class SQLString<Bindings = unknown> {
   constructor(readonly parts: Array<SQLStringPart>) {}
+
+  sql(): string {
+    return notImplemented();
+  }
+
+  args(): Array<Bindings> {
+    return notImplemented();
+  }
 }
 
 export type SQLStringPart<BoundValues = unknown> =
