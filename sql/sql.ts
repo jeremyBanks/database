@@ -3,27 +3,25 @@
  * Inspired by https://golang.org/src/database/sql/sql.go
  */
 import * as driver from "./driver.ts";
+import { SQLString } from "./strings.ts";
 
-import * as sqlite from "../x/sqlite.ts";
 import Context from "../_common/context.ts";
-import { Arguments, ThenType } from "../_common/typing.ts";
-import { unreachable } from "../_common/assertions.ts";
-import { Disposable } from "../_common/disposable.ts";
+import { assert, notImplemented, unreachable } from "../_common/assertions.ts";
 
-// deno-lint-ignore require-await
 export const open = async <
   Meta extends driver.BaseMeta = driver.BaseMeta,
-  Driver extends
-    & driver.Driver<Meta>
-    & (driver.Opener<Meta> | driver.OpenerSync<Meta>) =
-      & driver.Driver<Meta>
-      & (driver.Opener<Meta> | driver.OpenerSync<Meta>),
+  Driver extends driver.Driver<Meta> = driver.Driver<Meta>,
 >(
   path: string,
   driverModule: { driver: Driver },
 ): Promise<Database<Meta>> => {
   const driver = driverModule.driver;
-  return new Database<Meta, Driver>(driver, path);
+  const connector = driver.open
+    ? await driver.open(path)
+    : driver.openSync
+    ? driver.openSync(path)
+    : notImplemented("driver missing .open[Sync] implementation");
+  return new Database<Meta, Driver>(driver, connector);
 };
 
 /**
@@ -32,57 +30,109 @@ export const open = async <
 export class Database<
   Meta extends driver.BaseMeta,
   Driver extends driver.Driver<Meta> = driver.Driver<Meta>,
-> extends Disposable {
+> {
   constructor(
     private driver: Driver,
-    private path: string,
-  ) {
-    super();
-  }
+    private driverConnector: driver.Connector<Meta>,
+  ) {}
 
-  connect(opts?: { context?: Context }):
-    & Promise<Connection<Meta, Driver>>
-    & Pick<Disposable<Connection<Meta, Driver>>, "use"> {
-    const connection = Promise.resolve().then(async () =>
-      await this.driver?.open?.(this.path, opts) ??
-        this.driver?.openSync?.(this.path, opts) ?? unreachable()
-    ).then((inner) => new Connection(inner));
+  async connect() {
+    const connection = this.driverConnector.connect
+      ? await this.driverConnector.connect()
+      : this.driverConnector.connectSync
+      ? this.driverConnector.connectSync()
+      : notImplemented("driver missing .connect[Sync] implementation");
 
-    return Object.assign(connection, {
-      use<Result>(f: (resource: Connection<Meta, Driver>) => Result) {
-        return connection.then((connection) => connection.use(f));
-      },
-    });
-  }
-
-  async *query(
-    sql: string,
-    parameters?: Array<Meta["Value"]>,
-    opts?: { context?: Context },
-  ) {
-    yield* await this.connect().use(async (connection) =>
-      await connection.query(sql, parameters, opts)
-    );
+    return new Connection<Meta, Driver>(this.driver, connection);
   }
 }
 
 export class Connection<
   Meta extends driver.BaseMeta,
   Driver extends driver.Driver<Meta> = driver.Driver<Meta>,
-> extends Disposable {
-  #connection: driver.Connection<Meta>;
+> {
   constructor(
-    connection: driver.Connection<Meta>,
-  ) {
-    super();
-    this.#connection = connection;
+    private driver: Driver,
+    private driverConnection: driver.Connection<Meta>,
+  ) {}
+
+  async transaction<Result>(
+    f: (transaction: Transaction<Meta, Driver>) => Result,
+  ): Promise<Result> {
+    const driverTransaction = this.driverConnection.start
+      ? await this.driverConnection.start()
+      : this.driverConnection.startSync
+      ? this.driverConnection.startSync()
+      : notImplemented("driver connection missing .start[Sync] implementation");
+    const transaction = new Transaction<Meta, Driver>(
+      this.driver,
+      driverTransaction,
+    );
+    try {
+      const result = await f(transaction);
+      driverTransaction.commit();
+      return result;
+    } catch (error) {
+      driverTransaction.rollback();
+      throw error;
+    }
+  }
+}
+
+export class Transaction<
+  Meta extends driver.BaseMeta,
+  Driver extends driver.Driver<Meta> = driver.Driver<Meta>,
+> {
+  constructor(
+    private driver: Driver,
+    private driverTransaction: driver.Transaction<Meta>,
+  ) {}
+
+  query(
+    query: SQLString<Meta["Value"]>,
+  ): AsyncIterable<Iterable<Meta["Value"]>>;
+  query(
+    query: string,
+    args?: Array<Meta["Value"]>,
+  ): AsyncIterable<Iterable<Meta["Value"]>>;
+  query(
+    query: SQLString<Meta["Value"]> | string,
+    args?: Array<Meta["Value"]>,
+  ): AsyncGenerator<Iterable<Meta["Value"]>> {
+    let sqlQuery;
+    if (query instanceof SQLString) {
+      assert(args === undefined);
+      sqlQuery = query.sql(driver);
+      args = query.args();
+    } else {
+      assert(typeof query === "string");
+      sqlQuery = query;
+    }
+    return this._query(sqlQuery, args);
   }
 
-  async *query(
-    sql: string,
-    parameters?: Array<Meta["Value"]>,
-    opts?: { context?: Context },
-  ) {
-    yield* [];
+  // This is only a separate method because TypeScript doesn't allow overloaded
+  // generator definitions.
+  private async *_query(
+    query: string,
+    args?: Array<Meta["Value"]>,
+  ): AsyncGenerator<Iterable<Meta["Value"]>> {
+    const statement = this.driverTransaction.prepare
+      ? await this.driverTransaction.prepare(query)
+      : this.driverTransaction.prepareSync
+      ? this.driverTransaction.prepareSync(query)
+      : notImplemented(
+        "driver transaction missing .prepare[Sync] implementation",
+      );
+
+    for await (
+      const row of statement.query
+        ? statement.query(args)
+        : statement.querySync
+        ? statement.querySync(args)
+        : notImplemented("driver statement missing .query[Sync] implementation")
+    ) {
+      yield row;
+    }
   }
 }

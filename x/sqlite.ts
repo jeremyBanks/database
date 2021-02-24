@@ -1,24 +1,19 @@
 import * as sqlite from "https://deno.land/x/sqlite@v2.3.2/mod.ts";
 
-import * as sql from "../sql/driver.ts";
+import * as driver from "../sql/driver.ts";
 
-type Value = null | boolean | number | string | bigint | Uint8Array;
-
-export type Meta = sql.Meta<{
-  sqlDialectName: "sqlite";
-  Value: Value;
+export type Meta = driver.Meta<{
+  Value: null | boolean | number | string | bigint | Uint8Array;
 }>;
 
-export class Driver implements sql.Driver<Meta> {
+export class Driver implements driver.Driver<Meta> {
   openSync(path: string) {
-    return new Connection(this, path);
+    return new Connector(this, path);
   }
 
   encodeIdentifier(identifier: string, opts?: {
-    allowWeird?: boolean;
     allowInternal?: boolean;
   }): string {
-    const allowWeird = opts?.allowWeird ?? true;
     const allowInternal = opts?.allowInternal ?? false;
 
     if (identifier.includes("\x00")) {
@@ -36,24 +31,15 @@ export class Driver implements sql.Driver<Meta> {
     // In some cases, SQLite may interpret double-quoted and single-quoted strings
     // to be either string literals or identifiers depending on the context. To
     // avoid any potential ambiguity, we use SQLite's other supported quoting
-    // characters, although they aren't standard SQL.
+    // characters, although they aren't standardized.
     let encoded;
     if (!identifier.includes("]")) {
-      // If the identifier doesn't include a closing square bracket, we can just
-      // wrap the value in square brackets.
+      // If the identifier doesn't include a closing square bracket, we can wrap
+      // the value in square brackets.
       encoded = `[${identifier}]`;
     } else {
       // Otherwise, wrap it in backticks and double any backticks it contains.
       encoded = "`" + identifier.replace(/`/g, "``") + "`";
-    }
-
-    const identifierIsWeird = !/^[A-Za-z_][A-Za-z_0-9]{0,63}$/.test(identifier);
-    if (identifierIsWeird && !allowWeird) {
-      throw new TypeError(
-        `Weird SQL identifier ${
-          JSON.stringify(identifier)
-        }, encoded as ${encoded}, is not allowed.`,
-      );
     }
 
     // Quoting https://github.com/sqlite/sqlite/blob/c8af879e5f501595d5bc59e15621ce25ab76d566/src/build.c#L879-L881
@@ -76,20 +62,32 @@ export class Driver implements sql.Driver<Meta> {
   }
 }
 
-export const driver = new Driver();
-export class Connection implements sql.Connection<Meta> {
+export class Connector implements driver.Connector<Meta> {
   constructor(
     readonly driver: Driver,
-    private path: string,
+    private readonly path: string,
   ) {}
 
-  private inner = new sqlite.DB(this.path);
+  connectSync() {
+    const handle = new sqlite.DB(this.path);
+    return new Connection(this.driver, handle);
+  }
+}
+
+export class Connection implements driver.Connection<Meta> {
+  constructor(
+    readonly driver: Driver,
+    private readonly handle: sqlite.DB,
+  ) {}
 
   querySync(
     sql: string,
     values: Array<Value>,
     context: unknown,
-  ): sql.RowsSync<Meta> {
-    return this.inner.query(sql, values);
+  ): driver.RowsSync<Meta> {
+    return this.handle.query(sql, values);
   }
 }
+
+const sqliteDriver = new Driver();
+export { sqliteDriver as driver };
