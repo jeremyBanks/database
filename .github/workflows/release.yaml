@@ -1,0 +1,26 @@
+name: Tag Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Tag Release
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+      - name: create and push tag from ./version
+        run: |
+          declare version="$(eval "echo $(cat ./VERSION)")"
+          deno eval '
+            import * as semver from "https://deno.land/x/semver@v1.0.0/mod.ts";
+            const [version] = Deno.args;
+            if (semver.valid(version)) {
+              console.log(`version is valid: ${version}`);
+            } else {
+              console.log(`version is NOT valid: ${version}`);
+              Deno.exit(1);
+            }
+          ' "${version}"
+          git tag "${version}"
+          git push origin "${version}"
