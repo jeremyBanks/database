@@ -76,7 +76,8 @@ export interface Disposable<Meta extends BaseMeta = BaseMeta> {
 export interface Transaction<Meta extends BaseMeta = BaseMeta>
   extends
     Intersection<
-      StatementPreparer<Meta>
+      StatementPreparer<Meta>,
+      TransactionStarter<Meta>
     > {
   rollback?(): Promise<void>;
   rollbackSync?(): void;

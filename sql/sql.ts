@@ -86,7 +86,40 @@ export class Transaction<
   constructor(
     private driver: Driver,
     private driverTransaction: driver.Transaction<Meta>,
+    private child?: Transaction<Meta, Driver>,
   ) {}
+
+  async transaction<Result>(
+    f: (transaction: Transaction<Meta, Driver>) => Result,
+  ): Promise<Result> {
+    if (this.child) {
+      throw new TypeError(
+        "can not .transaction() this transaction while it has an active child transaction.",
+      );
+    }
+
+    const driverTransaction = this.driverTransaction.start
+      ? await this.driverTransaction.start()
+      : this.driverTransaction.startSync
+      ? this.driverTransaction.startSync()
+      : notImplemented(
+        "driver transaction missing .start[Sync] implementation",
+      );
+
+    this.child = new Transaction<Meta, Driver>(
+      this.driver,
+      driverTransaction,
+    );
+
+    try {
+      const result = await f(this.child);
+      driverTransaction.commit();
+      return result;
+    } catch (error) {
+      driverTransaction.rollback();
+      throw error;
+    }
+  }
 
   query(
     query: SQLString<Meta["Value"]>,
@@ -99,6 +132,12 @@ export class Transaction<
     query: SQLString<Meta["Value"]> | string,
     args?: Array<Meta["Value"]>,
   ): AsyncGenerator<Iterable<Meta["Value"]>> {
+    if (this.child) {
+      throw new TypeError(
+        "can not .query() this transaction while it has an active child transaction.",
+      );
+    }
+
     let sqlQuery;
     if (query instanceof SQLString) {
       assert(args === undefined);
