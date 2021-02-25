@@ -2,8 +2,10 @@ import * as sqlite from "https://deno.land/x/sqlite@v2.3.2/mod.ts";
 
 import * as driver from "../sql/driver.ts";
 
+export type Value = null | boolean | number | string | bigint | Uint8Array;
+
 export type Meta = driver.Meta<{
-  Value: null | boolean | number | string | bigint | Uint8Array;
+  Value: Value;
 }>;
 
 export class Driver implements driver.Driver<Meta> {

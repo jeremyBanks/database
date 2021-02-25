@@ -16,11 +16,8 @@ export const open = async <
   driverModule: { driver: Driver },
 ): Promise<Database<Meta>> => {
   const driver = driverModule.driver;
-  const connector = driver.open
-    ? await driver.open(path)
-    : driver.openSync
-    ? driver.openSync(path)
-    : notImplemented("driver missing .open[Sync] implementation");
+  const connector = await driver.open?.(path) ?? driver.openSync?.(path) ??
+    unreachable("driver missing .open[Sync] implementation");
   return new Database<Meta, Driver>(driver, connector);
 };
 
@@ -37,11 +34,9 @@ export class Database<
   ) {}
 
   async connect() {
-    const connection = this.driverConnector.connect
-      ? await this.driverConnector.connect()
-      : this.driverConnector.connectSync
-      ? this.driverConnector.connectSync()
-      : notImplemented("driver missing .connect[Sync] implementation");
+    const connection = await this.driverConnector.connect?.() ??
+      this.driverConnector.connectSync?.() ??
+      unreachable("driver missing .connect[Sync] implementation");
 
     return new Connection<Meta, Driver>(this.driver, connection);
   }
@@ -59,11 +54,9 @@ export class Connection<
   async transaction<Result>(
     f: (transaction: Transaction<Meta, Driver>) => Result,
   ): Promise<Result> {
-    const driverTransaction = this.driverConnection.start
-      ? await this.driverConnection.start()
-      : this.driverConnection.startSync
-      ? this.driverConnection.startSync()
-      : notImplemented("driver connection missing .start[Sync] implementation");
+    const driverTransaction = await this.driverConnection.start?.() ??
+      this.driverConnection.startSync?.() ??
+      unreachable("driver connection missing .start[Sync] implementation");
     const transaction = new Transaction<Meta, Driver>(
       this.driver,
       driverTransaction,
@@ -98,11 +91,9 @@ export class Transaction<
       );
     }
 
-    const driverTransaction = this.driverTransaction.start
-      ? await this.driverTransaction.start()
-      : this.driverTransaction.startSync
-      ? this.driverTransaction.startSync()
-      : notImplemented(
+    const driverTransaction = await this.driverTransaction.start?.() ??
+      this.driverTransaction.startSync?.() ??
+      unreachable(
         "driver transaction missing .start[Sync] implementation",
       );
 
@@ -156,20 +147,16 @@ export class Transaction<
     query: string,
     args?: Array<Meta["Value"]>,
   ): AsyncGenerator<Iterable<Meta["Value"]>> {
-    const statement = this.driverTransaction.prepare
-      ? await this.driverTransaction.prepare(query)
-      : this.driverTransaction.prepareSync
-      ? this.driverTransaction.prepareSync(query)
-      : notImplemented(
+    const statement = await this.driverTransaction.prepare?.(query) ??
+      this.driverTransaction.prepareSync?.(query) ??
+      unreachable(
         "driver transaction missing .prepare[Sync] implementation",
       );
 
     for await (
-      const row of statement.query
-        ? statement.query(args)
-        : statement.querySync
-        ? statement.querySync(args)
-        : notImplemented("driver statement missing .query[Sync] implementation")
+      const row of statement.query?.(args) ??
+        statement.querySync?.(args) ??
+        unreachable("driver statement missing .query[Sync] implementation")
     ) {
       yield row;
     }
