@@ -6,6 +6,8 @@ Compatibility wrappers for various database libraries.
 
 - [`sqlite.ts`](./sqlite.ts) wraps [`/x/sqlite/`](https://deno.land/x/sqlite), a
   synchronous in-process WASM SQLite library.
+  [Used under the MIT License](https://github.com/dyedgreen/deno-sqlite/blob/master/LICENSE).
 - [`postgres.ts`](./postgres.ts) wraps
   [`/x/postgres/`](https://deno.land/x/postgres), an asynchronous PostgreSQL
   client library.
+  [Used under the MIT license](https://github.com/denodrivers/postgres#license).
