@@ -16,6 +16,10 @@ export class SQLString<Bindings = unknown> {
   }
 }
 
+// you should be able to interpolate arrays of
+// identifiers, or arrays of bound values, and
+// have a comma-delimited input as a result.
+
 export type SQLStringPart<BoundValues = unknown> =
   | SQLLiteral
   | SQLIdentifier

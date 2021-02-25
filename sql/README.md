@@ -9,85 +9,52 @@ in [Deno], inspired by Go's
 
 [Deno]: https://deno.land/
 
+## Contents
+
+- [`sql.ts`](./sql.ts) provides the primary database interface that most users
+  will use. It must be used in conjunction a supporting database driver module
+  of choice.
+
+  ```ts
+  import sql from "https://deno.land/x/database@0.1.0/sql/sql.ts";
+  import sqlite from "https://deno.land/x/database@0.1.0/x/sqlite.ts";
+
+  const database = await sql.open("file::memory:", sqlite);
+
+  const [value] = await database.queryRow(
+    "SELECT Name FROM Users WHERE Ids in (?, ?) LIMIT 1",
+    [1, 2],
+  );
+  ```
+
+- [`strings.ts`](./strings.ts) provides a <code>SQL\`…\`</code> string tag
+  function that may optionally be used to express queries when using `sql.ts`.
+  It supports safe interpolation of bound values, other <code>SQL\`…\`</code>
+  strings, and dynamic SQL identifiers (table, column, and database names).
+
+  ```ts
+  import SQL from "https://deno.land/x/database@0.1.0/sql/strings.ts";
+
+  const targetIds = [1, 2];
+  const column = SQL.identifier("Name");
+  const whereClause = SQL`WHERE Id IN ${targetIds}`;
+  const [value] = await database.queryRow(
+    SQL`SELECT ${column} FROM Users ${whereClause} LIMIT 1`,
+  );
+  ```
+
+- [`driver.ts`](./driver.ts) provides a set of interfaces (most optional, some
+  required) that can be implemented by a driver module for it to support use
+  with `sql.ts`. Most users should never need to import this.
+
 ## Current Limitations
 
 - The code isn't finished and probably doesn't even run.
+- Timeouts and cancellation (contexts) are not implemented.
 - Connections are not pooled.
 - `sql.Database` only provides an async interface, even for sync drivers.
 - `sql.Database` is lacking a lot of convenience methods.
 - `driver` provides no optional fast-paths interfaces for optimized drivers.
-
-## Usage
-
-```ts
-import sql from "https://deno.land/x/database@0.1.0/sql.ts";
-
-// Import your supporting database driver module of choice.
-import sqlite from "https://deno.land/x/database@0.1.0/x/sqlite.ts";
-
-// Use of SQL-tagged strings is highly encouraged but not required.
-import SQL from "https://deno.land/x/database@0.1.0/strings.ts";
-
-const database = await sql.open(":memory:", sqlite);
-
-await database.exec(SQL`
-  CREATE TABLE User (
-    Id INTEGER PRIMARY KEY,
-    Name TEXT NOT NULL,
-  );
-`);
-
-await database.transaction(async (transaction) => {
-  for (
-    const name of [
-      "Dalinar",
-      "Adolin",
-      "Shallan",
-      "Stick",
-    ]
-  ) {
-    await transaction.exec(SQL`
-      INSERT INTO Users (name) VALUES (${name})
-    `);
-  }
-});
-
-for await (
-  const [id, name] of database.query(SQL`SELECT Id, Name FROM Users`)
-) {
-  console.log(id, name);
-}
-
-const dynamicColumnName = Math.random() < 0.5 ? "Id" : "Name";
-const column = SQL.identifier(dynamicColumnName);
-const [value] = await database.queryRow(SQL`SELECT ${column} FROM Users`);
-console.log(`${dynamicColumnName} is ${value}`);
-```
-
-## Driver Module Implementation
-
-```ts
-import * as sql from "https://deno.land/x/database@0.1.0/sql/driver.ts";
-
-const Meta = sql.Meta<{
-  // Type of values bound and returned by this Driver.
-  Value: string | number | boolean | null
-}>;
-
-class Driver implements sql.Driver<Meta> {
-  async open(path: string): Promise<Connection> {
-    // ...
-  }
-  // and/or
-  openSync(path: string): Connection {
-    // ...
-  }
-};
-
-// This is the only required export, any others are up to you.
-export const driver = new Driver();
-
-class Connection implements sql.Connection<Meta> {
-  // ...
-}
-```
+- No isolation mode options.
+- No result row names.
+- No result type mapping.

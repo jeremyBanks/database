@@ -2,6 +2,6 @@
 
 Compatibility wrappers for various database libraries.
 
-## Modules
+## Contents
 
 - [**x/database/x/sqlite**](./sqlite.ts)

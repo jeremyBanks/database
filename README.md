@@ -7,7 +7,7 @@ inspired by Go's [**database**](https://golang.org/pkg/database/sql/) package.
 
 [Deno]: https://deno.land/
 
-## Modules
+## Contents
 
 - [**x/database/sql**](./sql/)
 
