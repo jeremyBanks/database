@@ -5,6 +5,7 @@ export class Disposable<As = unknown> {
         "non-async disposal of type with disposeAsync() implementation but no dispose() implementation",
       );
     }
+    this.#used = true;
     return;
   }
 

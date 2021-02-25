@@ -1,6 +1,7 @@
 import * as sqlite from "https://deno.land/x/sqlite@v2.3.2/mod.ts";
 
 import * as driver from "../sql/driver.ts";
+import { Disposable } from "../_common/disposable.ts";
 
 export type Value = null | boolean | number | string | bigint | Uint8Array;
 
@@ -82,12 +83,49 @@ export class Connection implements driver.Connection<Meta> {
     private readonly handle: sqlite.DB,
   ) {}
 
-  querySync(
-    sql: string,
-    values: Array<Value>,
-    context: unknown,
-  ): driver.RowsSync<Meta> {
-    return this.handle.query(sql, values);
+  startSync() {
+    const transaction = new Transaction(this.driver, this.handle, this);
+    this.handle.query(`SAVEPOINT ${transaction.name}`).return();
+    return transaction;
+  }
+}
+
+export class Transaction implements driver.Transaction<Meta> {
+  static nextId = 1;
+  readonly name: string;
+
+  constructor(
+    readonly driver: Driver,
+    private readonly connectionHandle: sqlite.DB,
+    private readonly parent: Transaction | Connection,
+  ) {
+    if (parent instanceof Transaction) {
+      this.name = `${parent.name}_${Transaction.nextId}`;
+    } else {
+      this.name = `transaction_${Transaction.nextId}`;
+    }
+    Transaction.nextId += 1;
+  }
+
+  commitSync() {
+    this.connectionHandle.query(`RELEASE ${this.name}`).return();
+  }
+
+  rollbackSync() {
+    this.connectionHandle.query(`ROLLBACK TO ${this.name}`).return();
+  }
+}
+
+/** A prepared statement, bound in the context of a parent transaction or connection. */
+export class Statement implements driver.Statement {
+  constructor(
+    private readonly parent: Transaction | Connection,
+    private readonly connectionHandle: sqlite.DB,
+    private readonly sql: string,
+  ) {}
+
+  querySync(...args: Array<Value>) {
+    return this.connectionHandle.query(this.sql, args);
   }
 }
 
