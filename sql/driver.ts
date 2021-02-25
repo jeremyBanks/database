@@ -5,11 +5,13 @@
  * A class that implements one a type with optional sync and async versions of a
  * methods is expected to implement at least one of those versions.
  */
+
 // deno-lint-ignore-file no-empty-interface
 
 import Context from "../_common/context.ts";
 import { Intersection } from "../_common/typing.ts";
 
+/** Type metadata associated with a driver. */
 export interface BaseMeta {
   /** The allowed types for Values passed into or returned from this driver. */
   Value: unknown;
@@ -26,34 +28,41 @@ export type Meta<Opts extends Partial<BaseMeta>> = {
 
 export interface Driver<Meta extends BaseMeta = BaseMeta> extends
   Intersection<
-    Opener<Meta>,
+    ConnectorOpener<Meta>,
     Partial<IdentifierEncoder<Meta>>
   > {}
 
-/** Types that provide a `.driver`, used for both instances and modules. */
-export interface WithDriver<Meta extends BaseMeta = BaseMeta> {
+export interface HasDriver<Meta extends BaseMeta = BaseMeta> {
   readonly driver: Driver<Meta>;
 }
 
-/** Types that can prepare a Connector for a given database. */
-export interface Opener<Meta extends BaseMeta = BaseMeta> {
-  open?(
+/** A type that may provide a .dispose() method that may be called to
+  * reclaim any associated resources once it is no longer going to be used.
+  * Redundant calls to .dispose() should have no effect. */
+export interface Disposer {
+  dispose?(): void | Promise<void>;
+}
+
+/** Prepares a connector for the database. May validate arguments, but must not
+  * actually connect. */
+export interface ConnectorOpener<Meta extends BaseMeta = BaseMeta> {
+  openConnector?(
     path: string,
-    options?: { context?: Context },
+    options: { context: Context },
   ): Promise<Connector<Meta>>;
-  openSync?(
+  openConnectorSync?(
     path: string,
-    options?: { context?: Context },
+    options: { context: Context },
   ): Connector<Meta>;
 }
 
-/** Types that can open a new Connection to a given database. */
+/** Opens a new connection to the database. */
 export interface Connector<Meta extends BaseMeta = BaseMeta> {
   connect?(
-    options?: { context?: Context },
+    options: { context: Context },
   ): Promise<Connection<Meta>>;
   connectSync?(
-    options?: { context?: Context },
+    options: { context: Context },
   ): Connection<Meta>;
 }
 
@@ -63,77 +72,91 @@ export interface Connection<Meta extends BaseMeta = BaseMeta>
     Intersection<
       StatementPreparer<Meta>,
       TransactionStarter<Meta>,
-      Disposable<Meta>
+      Disposer
     > {
-}
-
-/** A resource that can be disposed (such a connection that can be closed). */
-export interface Disposable<Meta extends BaseMeta = BaseMeta> {
-  dispose?(): void;
-  disposeAsync?(): Promise<void>;
 }
 
 export interface Transaction<Meta extends BaseMeta = BaseMeta>
   extends
     Intersection<
       StatementPreparer<Meta>,
-      TransactionStarter<Meta>
+      TransactionStarter<Meta>,
+      Disposer
     > {
-  rollback?(): Promise<void>;
-  rollbackSync?(): void;
+  rollback?(
+    options: { context: Context },
+  ): Promise<void>;
+  rollbackSync?(
+    options: { context: Context },
+  ): void;
 
-  commit?(): Promise<void>;
-  commitSync?(): void;
+  commit?(
+    options: { context: Context },
+  ): Promise<void>;
+  commitSync?(
+    options: { context: Context },
+  ): void;
 }
 
 export interface TransactionStarter<Meta extends BaseMeta = BaseMeta> {
-  start?(): Promise<Transaction>;
-  startSync?(): Transaction;
+  startTransaction?(
+    options: { context: Context },
+  ): Promise<Transaction>;
+  startTransactionSync?(
+    options: { context: Context },
+  ): Transaction;
 }
 
+/** Safe encoding of dynamic identifiers for use in SQL expressions.
+  * Drivers that do not implement this will fall back to a default
+  * implementation that only allows simple identifiers that do not require
+  * potentially implementation-dependent encoding logic. */
 export interface IdentifierEncoder<Meta extends BaseMeta = BaseMeta> {
-  encodeIdentifierSync(identifier: string, opts?: {
-    context?: "column" | "table" | "database";
-    allowInternal?: boolean;
+  encodeIdentifierSync(identifier: string, opts: {
+    allowInternal: boolean;
   }): string;
 }
 
+/** Prepares a statement for execution. The statement is expected to be used
+  * within the current transaction transaction (not including its children).
+  * It may be disposed and invalid after its transaction is finished. */
 export interface StatementPreparer<Meta extends BaseMeta = BaseMeta> {
-  prepare?(query: string): Promise<Statement<Meta>>;
-  prepareSync?(query: string): Statement<Meta>;
+  prepareStatement?(query: string): Promise<PreparedStatement<Meta>>;
+  prepareStatementSync?(query: string): PreparedStatement<Meta>;
 }
 
-export interface Statement<Meta extends BaseMeta = BaseMeta> {
+export interface PreparedStatement<Meta extends BaseMeta = BaseMeta>
+  extends Intersection<Queryer<Meta>, Execer<Meta>, Disposer> {}
+
+export interface Queryer<Meta extends BaseMeta = BaseMeta> {
   query?(
     values: Array<Meta["Value"]>,
-    options?: { context?: Context },
+    options: { context: Context },
   ): Rows<Meta>;
   querySync?(
     values: Array<Meta["Value"]>,
-    options?: { context?: Context },
+    options: { context: Context },
   ): RowsSync<Meta>;
-
-  exec?(
-    values: Array<Meta["Value"]>,
-    options?: { context?: Context },
-  ): Promise<ExecResult>;
-  execSync?(
-    values: Array<Meta["Value"]>,
-    options?: { context?: Context },
-  ): ExecResult;
 }
 
-export interface Rows<Meta extends BaseMeta = BaseMeta> extends
-  AsyncIterable<
-    Iterable<Meta["Value"]>
-  > {}
+export interface Execer<Meta extends BaseMeta = BaseMeta> {
+  exec?(
+    values: Array<Meta["Value"]>,
+    options: { context: Context },
+  ): Promise<ExecResult<Meta>>;
+  execSync?(
+    values: Array<Meta["Value"]>,
+    options: { context: Context },
+  ): ExecResult<Meta>;
+}
 
-export interface RowsSync<Meta extends BaseMeta = BaseMeta> extends
-  Iterable<
-    Iterable<Meta["Value"]>
-  > {}
+export interface Rows<Meta extends BaseMeta = BaseMeta>
+  extends AsyncIterable<Iterable<Meta["Value"]>> {}
 
-export interface ExecResult {
-  rowsAffected: number;
-  lastInsertId: number;
+export interface RowsSync<Meta extends BaseMeta = BaseMeta>
+  extends Iterable<Iterable<Meta["Value"]>> {}
+
+export interface ExecResult<Meta extends BaseMeta = BaseMeta> {
+  readonly rowsAffected: number | null;
+  readonly lastInsertId: Meta["Value"];
 }

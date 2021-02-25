@@ -9,6 +9,14 @@ in [Deno], inspired by Go's
 
 [Deno]: https://deno.land/
 
+## Current Limitations
+
+- The code isn't finished and probably doesn't even run.
+- Connections are not pooled.
+- `sql.Database` only provides an async interface, even for sync drivers.
+- `sql.Database` is lacking a lot of convenience methods.
+- `driver` provides no optional fast-paths interfaces for optimized drivers.
+
 ## Usage
 
 ```ts

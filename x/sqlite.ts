@@ -1,7 +1,6 @@
 import * as sqlite from "https://deno.land/x/sqlite@v2.3.2/mod.ts";
 
 import * as driver from "../sql/driver.ts";
-import { Disposable } from "../_common/disposable.ts";
 
 export type Value = null | boolean | number | string | bigint | Uint8Array;
 
@@ -14,8 +13,8 @@ export class Driver implements driver.Driver<Meta> {
     return new Connector(this, path);
   }
 
-  encodeIdentifier(identifier: string, opts?: {
-    allowInternal?: boolean;
+  encodeIdentifierSync(identifier: string, opts: {
+    allowInternal: boolean;
   }): string {
     const allowInternal = opts?.allowInternal ?? false;
 
@@ -88,6 +87,10 @@ export class Connection implements driver.Connection<Meta> {
     this.handle.query(`SAVEPOINT ${transaction.name}`).return();
     return transaction;
   }
+
+  dispose() {
+    this.handle.close();
+  }
 }
 
 export class Transaction implements driver.Transaction<Meta> {
@@ -97,7 +100,7 @@ export class Transaction implements driver.Transaction<Meta> {
   constructor(
     readonly driver: Driver,
     private readonly connectionHandle: sqlite.DB,
-    private readonly parent: Transaction | Connection,
+    parent: Transaction | Connection,
   ) {
     if (parent instanceof Transaction) {
       this.name = `${parent.name}_${Transaction.nextId}`;
@@ -117,15 +120,22 @@ export class Transaction implements driver.Transaction<Meta> {
 }
 
 /** A prepared statement, bound in the context of a parent transaction or connection. */
-export class Statement implements driver.Statement {
+export class PreparedStatement implements driver.PreparedStatement {
   constructor(
-    private readonly parent: Transaction | Connection,
     private readonly connectionHandle: sqlite.DB,
     private readonly sql: string,
   ) {}
 
-  querySync(...args: Array<Value>) {
-    return this.connectionHandle.query(this.sql, args);
+  querySync(values: Array<Value>) {
+    return this.connectionHandle.query(this.sql, values);
+  }
+
+  execSync(values: Array<Value>): driver.ExecResult<Meta> {
+    this.connectionHandle.query(this.sql, values).return();
+    return {
+      rowsAffected: this.connectionHandle.changes,
+      lastInsertId: this.connectionHandle.lastInsertRowId,
+    };
   }
 }
 
