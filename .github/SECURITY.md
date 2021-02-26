@@ -2,7 +2,7 @@
 
 ## Supported Versions
 
-None. This may not be secure. I'll try to make sure it is before 1.0.0.
+None. This may not be secure. I'll try to fix that before v1.0.0.
 
 ## Reporting a Vulnerability
 
