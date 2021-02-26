@@ -1,2 +1,48 @@
 {
+  "deno.codeLens.implementations": true,
+  "deno.codeLens.references": true,
+  "deno.codeLens.referencesAllFunctions": true,
+  "deno.enable": true,
+  "deno.import_intellisense_origins": {
+    "https://deno.land": true
+  },
+  "deno.lint": true,
+  "deno.unstable": true,
+  "editor.codeLens": true,
+  "[javascript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno",
+  },
+  "[typescript]": {
+    "editor.defaultFormatter": "denoland.vscode-deno",
+  },
+  "[markdown]": {
+    "editor.defaultFormatter": "denoland.vscode-deno",
+  },
+  "editor.tabSize": 2,
+  "editor.fontFamily": "\"JetBrains Mono\", \"Fira Code\", \"Roboto Mono\", monospace",
+  "editor.fontSize": 13,
+  "editor.fontLigatures": true,
+  "editor.formatOnSave": true,
+  "editor.minimap.maxColumn": 80,
+  "editor.minimap.showSlider": "always",
+  "editor.minimap.size": "fit",
+  "editor.renderWhitespace": "boundary",
+  "editor.rulers": [
+    80
+  ],
+  "errorLens.enabledDiagnosticLevels": [
+    "error",
+    "warning",
+    "info"
+  ],
+  "errorLens.onSave": true,
+  "files.autoSave": "onFocusChange",
+  "files.eol": "\n",
+  "files.exclude": {
+    ".devcontainer": true,
+    ".github": true,
+    ".vscode": true,
+  },
+  "files.insertFinalNewline": true,
+  "terminal.integrated.shell.linux": "/bin/zsh"
 }
