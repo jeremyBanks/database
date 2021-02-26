@@ -4,6 +4,7 @@ import { Query } from "./driver.ts";
 import { SQL } from "./strings.ts";
 import { asserts } from "../_common/deps.ts";
 import { as, assertStatic } from "../_common/typing.ts";
+import { notImplemented } from "../_common/assertions.ts";
 
 const fakeDriver: driver.Driver<
   driver.Meta<{
@@ -29,7 +30,7 @@ Deno.test("multiple value bindings", () => {
   const prepared = query.forDriver(fakeDriver);
 
   // @ts-ignore known failure
-  assertStatic as as.Extends<
+  assertStatic as as.Equals<
     typeof prepared,
     [string, [number, string, null]]
   >;
@@ -42,7 +43,7 @@ Deno.test("multi-value binding", () => {
   const prepared = query.forDriver(fakeDriver);
 
   // @ts-ignore known failure
-  assertStatic as as.Extends<
+  assertStatic as as.Equals<
     typeof prepared,
     [string, [number, string, null]]
   >;
@@ -50,9 +51,14 @@ Deno.test("multi-value binding", () => {
   asserts.assertEquals(prepared, ["SELECT ?, ?, ?", [1, "2", null]]);
 });
 
-Deno.test("simple", () => {
-  const query = SQL`select 'star'`;
-  const prepared = query.forDriver(fakeDriver);
+Deno.test("multiple mixed multi-value bindings", () => {
+  notImplemented;
+});
 
-  asserts.assertEquals(prepared, ["select 'star'", []]);
+Deno.test("plain string interpolations", () => {
+  notImplemented;
+});
+
+Deno.test("multiple mixed multi-value bindings interpolated", () => {
+  notImplemented;
 });

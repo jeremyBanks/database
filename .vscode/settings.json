@@ -6,7 +6,6 @@
   ],
   "deno.codeLens.implementations": true,
   "deno.codeLens.references": true,
-  "deno.codeLens.referencesAllFunctions": true,
   "deno.enable": true,
   "deno.import_intellisense_origins": {
     "https://deno.land": true
@@ -28,6 +27,43 @@
   },
   "[typescriptreact]": {
     "editor.defaultFormatter": "denoland.vscode-deno",
+  },
+  "editor.tokenColorCustomizations": {
+    "textMateRules": [
+      {
+        "scope": "punctuation.definition.comment",
+        "settings": {
+          "foreground": "#0A4",
+          "fontStyle": "bold"
+        },
+      },
+      {
+        "scope": "comment",
+        "settings": {
+          "fontStyle": ""
+        }
+      }
+    ],
+    "[1337]": {
+      "textMateRules": [
+        {
+          "scope": "comment",
+          "settings": {
+            "foreground": "#FFF",
+          }
+        },
+      ],
+    },
+    "[Atom One Light]": {
+      "textMateRules": [
+        {
+          "scope": "comment",
+          "settings": {
+            "foreground": "#000",
+          }
+        },
+      ],
+    }
   },
   "editor.tabSize": 2,
   "editor.fontFamily": "\"JetBrains Mono\", \"Fira Code\", \"Roboto Mono\", monospace",
@@ -56,5 +92,6 @@
     ".vscode": true,
   },
   "files.insertFinalNewline": true,
-  "terminal.integrated.shell.linux": "/bin/zsh"
+  "terminal.integrated.shell.linux": "/bin/zsh",
+  "cSpell.language": "en,en-GB,en-US"
 }
