@@ -1,24 +1,21 @@
 // deno-lint-ignore-file
 /** @fileoverview Provides composable typed SQL query types. */
 import { notImplemented } from "../_common/assertions.ts";
+import * as driver from "./driver.ts";
 
 export const toSQLExpression = Symbol("toSQLExpression");
 
 export class SQLString<Bindings = unknown> {
-  constructor(readonly parts: Array<SQLStringPart>) {}
+  constructor(readonly parts: Array<SQLStringPart<Bindings>>) {}
 
-  sql(): string {
-    return notImplemented();
-  }
+  for(driver: driver.Driver): [string, Array<Bindings>] {
+    // you should be able to interpolate arrays of
+    // identifiers, or arrays of bound values, and
+    // have a comma-delimited input as a result.
 
-  args(): Array<Bindings> {
     return notImplemented();
   }
 }
-
-// you should be able to interpolate arrays of
-// identifiers, or arrays of bound values, and
-// have a comma-delimited input as a result.
 
 export type SQLStringPart<BoundValues = unknown> =
   | SQLLiteral

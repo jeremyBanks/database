@@ -6,7 +6,7 @@ import * as driver from "./driver.ts";
 import { SQLString } from "./strings.ts";
 
 import Context from "../_common/context.ts";
-import { assert, notImplemented, unreachable } from "../_common/assertions.ts";
+import { assert, notImplemented } from "../_common/assertions.ts";
 
 export const open = async <
   Meta extends driver.BaseMeta = driver.BaseMeta,
@@ -15,9 +15,11 @@ export const open = async <
   path: string,
   driverModule: { driver: Driver },
 ): Promise<Database<Meta>> => {
+  const context = Context.TODO;
   const driver = driverModule.driver;
-  const connector = await driver.open?.(path) ?? driver.openSync?.(path) ??
-    unreachable("driver missing .open[Sync] implementation");
+  const connector = await driver.openConnector?.(path, { context }) ??
+    driver.openConnectorSync?.(path, { context }) ??
+    notImplemented("driver missing .open[Sync] implementation");
   return new Database<Meta, Driver>(driver, connector);
 };
 
@@ -34,9 +36,10 @@ export class Database<
   ) {}
 
   async connect() {
-    const connection = await this.driverConnector.connect?.() ??
-      this.driverConnector.connectSync?.() ??
-      unreachable("driver missing .connect[Sync] implementation");
+    const context = Context.TODO;
+    const connection = await this.driverConnector.connect?.({ context }) ??
+      this.driverConnector.connectSync?.({ context }) ??
+      notImplemented("driver missing .connect[Sync] implementation");
 
     return new Connection<Meta, Driver>(this.driver, connection);
   }
@@ -54,19 +57,25 @@ export class Connection<
   async transaction<Result>(
     f: (transaction: Transaction<Meta, Driver>) => Result,
   ): Promise<Result> {
-    const driverTransaction = await this.driverConnection.start?.() ??
-      this.driverConnection.startSync?.() ??
-      unreachable("driver connection missing .start[Sync] implementation");
+    const context = Context.TODO;
+    const driverTransaction =
+      await this.driverConnection.startTransaction?.({ context }) ??
+        this.driverConnection.startTransactionSync?.({ context }) ??
+        notImplemented("driver connection missing .start[Sync] implementation");
     const transaction = new Transaction<Meta, Driver>(
       this.driver,
       driverTransaction,
     );
     try {
       const result = await f(transaction);
-      driverTransaction.commit();
+      await driverTransaction.commit?.({ context }) ??
+        driverTransaction.commitSync?.({ context }) ??
+        notImplemented(
+          "driver transaction missing .commit[Sync] implementation",
+        );
       return result;
     } catch (error) {
-      driverTransaction.rollback();
+      driverTransaction.rollback?.({ context });
       throw error;
     }
   }
@@ -85,17 +94,20 @@ export class Transaction<
   async transaction<Result>(
     f: (transaction: Transaction<Meta, Driver>) => Result,
   ): Promise<Result> {
+    const context = Context.TODO;
+
     if (this.child) {
       throw new TypeError(
         "can not .transaction() this transaction while it has an active child transaction.",
       );
     }
 
-    const driverTransaction = await this.driverTransaction.start?.() ??
-      this.driverTransaction.startSync?.() ??
-      unreachable(
-        "driver transaction missing .start[Sync] implementation",
-      );
+    const driverTransaction =
+      await this.driverTransaction.startTransaction?.({ context }) ??
+        this.driverTransaction.startTransactionSync?.({ context }) ??
+        notImplemented(
+          "driver transaction missing .start[Sync] implementation",
+        );
 
     this.child = new Transaction<Meta, Driver>(
       this.driver,
@@ -104,10 +116,18 @@ export class Transaction<
 
     try {
       const result = await f(this.child);
-      driverTransaction.commit();
+      await driverTransaction.commit?.({ context }) ??
+        driverTransaction.commitSync?.({ context }) ??
+        notImplemented(
+          "driver transaction missing .commit[Sync] implementation",
+        );
       return result;
     } catch (error) {
-      driverTransaction.rollback();
+      await driverTransaction.rollback?.({ context }) ??
+        driverTransaction.rollbackSync?.({ context }) ??
+        notImplemented(
+          "driver transaction missing .rollback[Sync] implementation",
+        );
       throw error;
     }
   }
@@ -129,34 +149,38 @@ export class Transaction<
       );
     }
 
-    let sqlQuery;
+    let queryString;
     if (query instanceof SQLString) {
       assert(args === undefined);
-      sqlQuery = query.sql(driver);
-      args = query.args();
+      const [querySql, queryArgs] = query.for(this.driver);
+      queryString = querySql;
+      args = queryArgs;
     } else {
       assert(typeof query === "string");
-      sqlQuery = query;
+      queryString = query;
     }
-    return this._query(sqlQuery, args);
+    return this._query(queryString, args ?? []);
   }
 
   // This is only a separate method because TypeScript doesn't allow overloaded
   // generator definitions.
   private async *_query(
     query: string,
-    args?: Array<Meta["Value"]>,
+    args: Array<Meta["Value"]>,
   ): AsyncGenerator<Iterable<Meta["Value"]>> {
-    const statement = await this.driverTransaction.prepare?.(query) ??
-      this.driverTransaction.prepareSync?.(query) ??
-      unreachable(
-        "driver transaction missing .prepare[Sync] implementation",
-      );
+    const context = Context.TODO;
+
+    const statement =
+      await this.driverTransaction.prepareStatement?.(query, { context }) ??
+        this.driverTransaction.prepareStatementSync?.(query, { context }) ??
+        notImplemented(
+          "driver transaction missing .prepareStatement[Sync] implementation",
+        );
 
     for await (
-      const row of statement.query?.(args) ??
-        statement.querySync?.(args) ??
-        unreachable("driver statement missing .query[Sync] implementation")
+      const row of statement.query?.(args, { context }) ??
+        statement.querySync?.(args, { context }) ??
+        notImplemented("driver statement missing .query[Sync] implementation")
     ) {
       yield row;
     }

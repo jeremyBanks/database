@@ -45,8 +45,7 @@ export class NotImplementedError extends Error {
   name = "NotImplementedError";
 }
 
-// deno-lint-ignore no-explicit-any
-export const notImplemented = (message?: string): any => {
+export const notImplemented = (message?: string): never => {
   throw new NotImplementedError(message ?? `not implemented in ${caller()}`);
 };
 

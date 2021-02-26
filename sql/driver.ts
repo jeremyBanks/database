@@ -9,7 +9,6 @@
 // deno-lint-ignore-file no-empty-interface
 
 import Context from "../_common/context.ts";
-import { Intersection } from "../_common/typing.ts";
 
 /** Type metadata associated with a driver. */
 export interface BaseMeta {
@@ -26,11 +25,8 @@ export type Meta<Opts extends Partial<BaseMeta>> = {
     : Opts[Key];
 };
 
-export interface Driver<Meta extends BaseMeta = BaseMeta> extends
-  Intersection<
-    ConnectorOpener<Meta>,
-    Partial<IdentifierEncoder<Meta>>
-  > {}
+export interface Driver<Meta extends BaseMeta = BaseMeta>
+  extends ConnectorOpener<Meta>, Partial<IdentifierEncoder<Meta>> {}
 
 export interface HasDriver<Meta extends BaseMeta = BaseMeta> {
   readonly driver: Driver<Meta>;
@@ -43,9 +39,9 @@ export interface Disposer {
   dispose?(): void | Promise<void>;
 }
 
-/** Prepares a connector for the database. May validate arguments, but must not
-  * actually connect. */
 export interface ConnectorOpener<Meta extends BaseMeta = BaseMeta> {
+  /** Prepares a connector for the database. May validate arguments, but must not
+    * actually connect. */
   openConnector?(
     path: string,
     options: { context: Context },
@@ -55,9 +51,8 @@ export interface ConnectorOpener<Meta extends BaseMeta = BaseMeta> {
     options: { context: Context },
   ): Connector<Meta>;
 }
-
-/** Opens a new connection to the database. */
 export interface Connector<Meta extends BaseMeta = BaseMeta> {
+  /** Opens a new connection to the database. */
   connect?(
     options: { context: Context },
   ): Promise<Connection<Meta>>;
@@ -68,65 +63,67 @@ export interface Connector<Meta extends BaseMeta = BaseMeta> {
 
 /** A database connection. */
 export interface Connection<Meta extends BaseMeta = BaseMeta>
-  extends
-    Intersection<
-      StatementPreparer<Meta>,
-      TransactionStarter<Meta>,
-      Disposer
-    > {
+  extends StatementPreparer<Meta>, TransactionStarter<Meta>, Disposer {
 }
 
 export interface Transaction<Meta extends BaseMeta = BaseMeta>
-  extends
-    Intersection<
-      StatementPreparer<Meta>,
-      TransactionStarter<Meta>,
-      Disposer
-    > {
+  extends StatementPreparer<Meta>, TransactionStarter<Meta>, Disposer {
   rollback?(
     options: { context: Context },
-  ): Promise<void>;
+  ): Promise<undefined>;
   rollbackSync?(
     options: { context: Context },
-  ): void;
+  ): undefined;
 
   commit?(
     options: { context: Context },
-  ): Promise<void>;
+  ): Promise<undefined>;
   commitSync?(
     options: { context: Context },
-  ): void;
+  ): undefined;
 }
 
 export interface TransactionStarter<Meta extends BaseMeta = BaseMeta> {
+  /** Starts a new transaction. The parent transaction/connect should not be
+    * used again until this transaction is closed. */
   startTransaction?(
     options: { context: Context },
-  ): Promise<Transaction>;
+  ): Promise<Transaction<Meta>>;
   startTransactionSync?(
     options: { context: Context },
-  ): Transaction;
+  ): Transaction<Meta>;
 }
 
-/** Safe encoding of dynamic identifiers for use in SQL expressions.
-  * Drivers that do not implement this will fall back to a default
-  * implementation that only allows simple identifiers that do not require
-  * potentially implementation-dependent encoding logic. */
 export interface IdentifierEncoder<Meta extends BaseMeta = BaseMeta> {
+  /** Safe encoding of dynamic identifiers for use in SQL expressions.
+    * Drivers that do not implement this will fall back to a default
+    * implementation that only allows simple identifiers that do not require
+    * potentially implementation-dependent encoding logic. */
   encodeIdentifierSync(identifier: string, opts: {
+    /** If allowInternal is false the implementation SHOULD throw an error if
+      * an internal database table name (such as `table_schema` in PostgreSQL or
+      * `sqlite_master` in SQLite), if possible.
+     */
     allowInternal: boolean;
   }): string;
 }
 
-/** Prepares a statement for execution. The statement is expected to be used
-  * within the current transaction transaction (not including its children).
-  * It may be disposed and invalid after its transaction is finished. */
 export interface StatementPreparer<Meta extends BaseMeta = BaseMeta> {
-  prepareStatement?(query: string): Promise<PreparedStatement<Meta>>;
-  prepareStatementSync?(query: string): PreparedStatement<Meta>;
+  /** Prepares a statement for execution. The statement is expected to be used
+    * within the current transaction transaction (not including its children).
+    * It may be disposed and invalid after its transaction is finished. */
+  prepareStatement?(
+    query: string,
+    options: { context: Context },
+  ): Promise<PreparedStatement<Meta>>;
+  prepareStatementSync?(
+    query: string,
+    options: { context: Context },
+  ): PreparedStatement<Meta>;
 }
 
 export interface PreparedStatement<Meta extends BaseMeta = BaseMeta>
-  extends Intersection<Queryer<Meta>, Execer<Meta>, Disposer> {}
+  extends Queryer<Meta>, Execer<Meta>, Disposer {}
 
 export interface Queryer<Meta extends BaseMeta = BaseMeta> {
   query?(
