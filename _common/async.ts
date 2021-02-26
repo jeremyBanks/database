@@ -14,6 +14,7 @@ export const throttled = <F extends Function>(
   }) as unknown as F;
 };
 
+// deno-lint-ignore require-await
 export const sleep = async (seconds: number, abort?: AbortSignal) => {
   return new Promise((resolve) => {
     const timeoutId = setTimeout(resolve, seconds * 1000);

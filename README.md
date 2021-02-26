@@ -16,8 +16,7 @@ package.
 
 Use `deno fmt`. Use `// deno-fmt-ignore` sparingly.
 
-You may use `deno --unstable lint` if you feel like it. Use
-`// deno-lint-ignore` liberally.
+Use `deno --unstable lint`. Use `// deno-lint-ignore` liberally.
 
 SQL is CamelCased as `SQL`, not `Sql`.
 
@@ -35,6 +34,11 @@ Copyright Jeremy Banks and [contributors]. Released under the [MIT License].
 
 [contributors]: https://github.com/jeremyBanks/database/graphs/contributors
 [MIT License]: http://opensource.org/licenses/MIT
+
+Includes some type definitions copied from code that is Copyright Facebook Inc
+and Sebastian McKenzie, and some copied from code that is Copyright Shopify.
+These are under the MIT License and annotated with links to the original
+sources.
 
 Some parts of this package are inspired by Go packages that are copyright The Go
 Authors and released under [Go's BSD-style License].

@@ -1,4 +1,4 @@
-// Copyright Shopify, used under the MIT license
+// Copyright Shopify, used under the MIT license.
 // https://github.com/Shopify/quilt/blob/master/packages/useful-types/src/types.ts
 // deno-lint-ignore-file
 

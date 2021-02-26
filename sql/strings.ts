@@ -3,12 +3,10 @@
 import { notImplemented } from "../_common/assertions.ts";
 import * as driver from "./driver.ts";
 
-export const toSQLExpression = Symbol("toSQLExpression");
-
 export class SQLString<Bindings = unknown> {
   constructor(readonly parts: Array<SQLStringPart<Bindings>>) {}
 
-  for(driver: driver.Driver): [string, Array<Bindings>] {
+  for(driver?: driver.Driver): [string, Array<Bindings>] {
     // you should be able to interpolate arrays of
     // identifiers, or arrays of bound values, and
     // have a comma-delimited input as a result.
@@ -26,8 +24,8 @@ export class SQLLiteral {
   constructor(readonly literal: string) {}
 }
 
-export class SQLIdentifier {
-  constructor(readonly identifier: string) {}
+export class SQLIdentifier<Identifier extends string = string> {
+  constructor(readonly identifier: Identifier) {}
 }
 
 export class SQLBoundValue<Value> {

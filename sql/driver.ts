@@ -158,3 +158,13 @@ export interface ExecResult<Meta extends BaseMeta = BaseMeta> {
   readonly rowsAffected: number | null;
   readonly lastInsertId: Meta["Value"];
 }
+
+export interface Query<
+  Meta extends BaseMeta = BaseMeta,
+  Args extends Array<Meta["Value"]> | Record<string, Meta["Value"]> =
+    | Array<Meta["Value"]>
+    | Record<string, Meta["Value"]>,
+> {
+  readonly sql: string;
+  readonly args: Args;
+}

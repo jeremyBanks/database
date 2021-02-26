@@ -18,6 +18,12 @@
   "[markdown]": {
     "editor.defaultFormatter": "denoland.vscode-deno",
   },
+  "[javascriptreact]": {
+    "editor.defaultFormatter": "denoland.vscode-deno",
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "denoland.vscode-deno",
+  },
   "editor.tabSize": 2,
   "editor.fontFamily": "\"JetBrains Mono\", \"Fira Code\", \"Roboto Mono\", monospace",
   "editor.fontSize": 13,
