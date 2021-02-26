@@ -51,6 +51,7 @@ export interface ConnectorOpener<Meta extends BaseMeta = BaseMeta> {
     options: { context: Context },
   ): Connector<Meta>;
 }
+
 export interface Connector<Meta extends BaseMeta = BaseMeta> {
   /** Opens a new connection to the database. */
   connect?(

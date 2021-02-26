@@ -7,7 +7,6 @@ import { SQLString } from "./strings.ts";
 
 import Context from "../_common/context.ts";
 import { assert, notImplemented } from "../_common/assertions.ts";
-
 export const open = async <
   Meta extends driver.BaseMeta = driver.BaseMeta,
   Driver extends driver.Driver<Meta> = driver.Driver<Meta>,

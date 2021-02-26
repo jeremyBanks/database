@@ -110,12 +110,14 @@ export class Transaction implements driver.Transaction<Meta> {
     Transaction.nextId += 1;
   }
 
-  commitSync() {
+  commitSync(): undefined {
     this.connectionHandle.query(`RELEASE ${this.name}`).return();
+    return;
   }
 
-  rollbackSync() {
+  rollbackSync(): undefined {
     this.connectionHandle.query(`ROLLBACK TO ${this.name}`).return();
+    return;
   }
 }
 
