@@ -161,9 +161,7 @@ export interface ExecResult<Meta extends BaseMeta = BaseMeta> {
 
 export interface Query<
   Meta extends BaseMeta = BaseMeta,
-  Args extends Array<Meta["Value"]> | Record<string, Meta["Value"]> =
-    | Array<Meta["Value"]>
-    | Record<string, Meta["Value"]>,
+  Args extends Array<Meta["Value"]> = Array<Meta["Value"]>,
 > {
   readonly sql: string;
   readonly args: Args;

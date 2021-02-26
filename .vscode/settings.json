@@ -1,4 +1,5 @@
 {
+  "cSpell.language": "en,en-GB,en-US",
   "cSpell.words": [
     "deno",
     "postgres",
@@ -92,6 +93,6 @@
     ".vscode": true,
   },
   "files.insertFinalNewline": true,
-  "terminal.integrated.shell.linux": "/bin/zsh",
-  "cSpell.language": "en,en-GB,en-US"
+  "git.autofetch": true,
+  "terminal.integrated.shell.linux": "/bin/zsh"
 }

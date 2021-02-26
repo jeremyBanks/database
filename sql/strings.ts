@@ -3,18 +3,59 @@
 
 // deno-lint-ignore-file
 
-import { notImplemented } from "../_common/assertions.ts";
-import { IdentifierEncoder } from "./driver.ts";
+import { notImplemented, unreachable } from "../_common/assertions.ts";
+import * as driver from "./driver.ts";
 
-export class SQLString<Bindings = unknown> {
-  constructor(readonly parts: Array<SQLStringPart<Bindings>>) {}
+export class SQLString<DriverValue = unknown> {
+  constructor(readonly parts: Array<SQLStringPart<DriverValue>>) {}
 
-  forDriver(driver?: Partial<IdentifierEncoder>): [string, Array<Bindings>] {
-    // you should be able to interpolate arrays of
-    // identifiers, or arrays of bound values, and
-    // have a comma-delimited input as a result.
+  forDriver<
+    Meta extends { Value: DriverValue },
+    Driver extends driver.Driver<Meta>,
+  >(
+    driver?: Driver,
+  ): driver.Query<Meta> {
+    const sqlParts = new Array<string>();
+    const boundArgs = new Array<DriverValue>();
 
-    return notImplemented();
+    for (const part of this.parts) {
+      if (part instanceof SQLLiteral) {
+        sqlParts.push(part.literal);
+      } else if (part instanceof SQLIdentifier) {
+        const identifier = part.identifier;
+        const driverEncoded = driver?.encodeIdentifierSync?.(identifier, {
+          allowInternal: false,
+        });
+
+        if (driverEncoded !== undefined) {
+          sqlParts.push(driverEncoded);
+        } else {
+          const trivialIdentifier = /^[a-z][a-z0-9]{0,63}$/i;
+          if (trivialIdentifier.test(identifier)) {
+            const triviallyEncoded = `"${trivialIdentifier}"`;
+            sqlParts.push(triviallyEncoded);
+          } else {
+            throw new Error(
+              `this driver only supports simple dynamic identifiers matching ${trivialIdentifier}, but was provided with ${
+                JSON.stringify(identifier)
+              }.`,
+            );
+          }
+        }
+
+        notImplemented("identifier encoding not implemented");
+      } else if (part instanceof SQLBoundValue) {
+        sqlParts.push(" ? ");
+        boundArgs.push(part.value);
+      } else {
+        unreachable();
+      }
+    }
+
+    return {
+      sql: sqlParts.join(""),
+      args: boundArgs,
+    };
   }
 }
 
