@@ -1,4 +1,9 @@
 {
+  "cSpell.words": [
+    "deno",
+    "postgres",
+    "wasm"
+  ],
   "deno.codeLens.implementations": true,
   "deno.codeLens.references": true,
   "deno.codeLens.referencesAllFunctions": true,
@@ -42,6 +47,7 @@
     "info"
   ],
   "errorLens.onSave": true,
+  "explorer.sortOrder": "filesFirst",
   "files.autoSave": "onFocusChange",
   "files.eol": "\n",
   "files.exclude": {

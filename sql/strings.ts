@@ -1,12 +1,15 @@
+/** @fileoverview Provides a composable typed SQL query string type implementing
+  * the driver.Query protocol for use with .query() and .exec() methods. */
+
 // deno-lint-ignore-file
-/** @fileoverview Provides composable typed SQL query types. */
+
 import { notImplemented } from "../_common/assertions.ts";
-import * as driver from "./driver.ts";
+import { IdentifierEncoder } from "./driver.ts";
 
 export class SQLString<Bindings = unknown> {
   constructor(readonly parts: Array<SQLStringPart<Bindings>>) {}
 
-  for(driver?: driver.Driver): [string, Array<Bindings>] {
+  forDriver(driver?: Partial<IdentifierEncoder>): [string, Array<Bindings>] {
     // you should be able to interpolate arrays of
     // identifiers, or arrays of bound values, and
     // have a comma-delimited input as a result.
@@ -19,6 +22,12 @@ export type SQLStringPart<BoundValues = unknown> =
   | SQLLiteral
   | SQLIdentifier
   | SQLBoundValue<BoundValues>;
+
+export type Interpolatable<BoundValues = unknown> =
+  | SQLStringPart<BoundValues>
+  | Array<SQLLiteral>
+  | Array<SQLIdentifier>
+  | Array<SQLBoundValue<BoundValues>>;
 
 export class SQLLiteral {
   constructor(readonly literal: string) {}
