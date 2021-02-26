@@ -29,11 +29,11 @@ jobs:
           export DENO_INSTALL="/home/runner/.deno"
           export PATH="${DENO_INSTALL}/bin:${PATH}"
           mkdir -p "${DENO_INSTALL}"
-          deno upgrade --canary || (
+          deno upgrade || (
             curl -fsSL https://deno.land/x/install/install.sh > "${DENO_INSTALL}/.sh";
             sh "${DENO_INSTALL}/.sh"
           )
-          deno upgrade --canary
+          deno upgrade
           deno --version
           deno info
           echo "DENO_INSTALL=${DENO_INSTALL}" >> "${GITHUB_ENV}"
