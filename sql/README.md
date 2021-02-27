@@ -11,9 +11,10 @@ in [Deno], inspired by Go's
 
 ## Contents
 
-- [`sql.ts`](./sql.ts) ([doc](https://doc.deno.land/https/deno.land/x/database/sql/sql.ts)) provides the primary database interface that most users
-  will use. It must be used in conjunction a supporting database driver module
-  of choice.
+- [`sql.ts`](./sql.ts)
+  ([doc](https://doc.deno.land/https/deno.land/x/database/sql/sql.ts)) provides
+  the primary database interface that most users will use. It must be used in
+  conjunction a supporting database driver module of choice.
 
   ```ts
   import sql from "https://deno.land/x/database@0.1.0/sql/sql.ts";
@@ -27,10 +28,12 @@ in [Deno], inspired by Go's
   );
   ```
 
-- [`strings.ts`](./strings.ts) ([doc](https://doc.deno.land/https/deno.land/x/database/sql/strings.ts)) provides a <code>SQL\`…\`</code> string tag
-  function that may optionally be used to express queries when using `sql.ts`.
-  It supports safe interpolation of bound values, other <code>SQL\`…\`</code>
-  strings, and dynamic SQL identifiers (table, column, and database names).
+- [`strings.ts`](./strings.ts)
+  ([doc](https://doc.deno.land/https/deno.land/x/database/sql/strings.ts))
+  provides a <code>SQL\`…\`</code> string tag function that may optionally be
+  used to express queries when using `sql.ts`. It supports safe interpolation of
+  bound values, other <code>SQL\`…\`</code> strings, and dynamic SQL identifiers
+  (table, column, and database names).
 
   ```ts
   import SQL from "https://deno.land/x/database@0.1.0/sql/strings.ts";
@@ -43,9 +46,11 @@ in [Deno], inspired by Go's
   );
   ```
 
-- [`driver.ts`](./driver.ts) ([doc](https://doc.deno.land/https/deno.land/x/database/sql/driver.ts)) provides a set of interfaces (most optional, some
-  required) that can be implemented by a driver module for it to support use
-  with `sql.ts`. Most users should never need to import this.
+- [`driver.ts`](./driver.ts)
+  ([doc](https://doc.deno.land/https/deno.land/x/database/sql/driver.ts))
+  provides a set of interfaces (most optional, some required) that can be
+  implemented by a driver module for it to support use with `sql.ts`. Most users
+  should never need to import this.
 
 ## Current Limitations
 
