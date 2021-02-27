@@ -31,6 +31,11 @@ unobtrusive defaults for users that don't need them.
 An underscore prefix on a module, directory, or identifier name indicates that
 it's internal and isn't intended to be imported from outside of its parent tree.
 
+When written in ALL-CAPS (in prose, not code), the terms "MUST", "MUST NOT",
+"REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY",
+and "OPTIONAL" in this project are to be interpreted as described in
+[RFC 2119](https://tools.ietf.org/html/RFC2119).
+
 ## License
 
 Copyright Jeremy Banks and [contributors]. Released under the [MIT License].
