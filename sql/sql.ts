@@ -1,12 +1,10 @@
-/** @fileoverview Package sql a generic interface around SQL (or SQL-like) databases.
- *
- * Inspired by https://golang.org/src/database/sql/sql.go
- */
+import { z } from "../_common/deps.ts";
+import Context from "../_common/context.ts";
+import { assert, notImplemented } from "../_common/assertions.ts";
+
 import * as driver from "./driver.ts";
 import { SQLString } from "./strings.ts";
 
-import Context from "../_common/context.ts";
-import { assert, notImplemented } from "../_common/assertions.ts";
 export const open = async <
   Meta extends driver.BaseMeta = driver.BaseMeta,
   Driver extends driver.Driver<Meta> = driver.Driver<Meta>,
@@ -23,8 +21,9 @@ export const open = async <
 };
 
 /**
- * `Database` is a database handle representing a pool of zero or more underlying connections.
- */
+Database is a database handle representing a pool of zero or more underlying 
+connections.
+*/
 export class Database<
   Meta extends driver.BaseMeta,
   Driver extends driver.Driver<Meta> = driver.Driver<Meta>,

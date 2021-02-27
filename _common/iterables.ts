@@ -11,14 +11,14 @@ export type Orderable =
   | null;
 
 /**
- * Compares two Orderable objects, using a total ordering that extends the
- * IndexedDB specification's key ordering (indexedDB.cmp(...)) defined at
- * https://github.com/w3c/IndexedDB/blob/89977452423aa5afc451/index.bs#L643-L732
- * to include undefined (before everything), null (before everything else),
- * booleans (false before true before everything else), NaNs (before other
- * numbers), bigints (after numbers), sparse arrays (missing values are
- * equivalent to undefined), and modifies it by ordering -0 before +0.
- */
+Compares two Orderable objects, using a total ordering that extends the
+IndexedDB specification's key ordering (indexedDB.cmp(...)) defined at
+https://github.com/w3c/IndexedDB/blob/89977452423aa5afc451/index.bs#L643-L732
+to include undefined (before everything), null (before everything else),
+booleans (false before true before everything else), NaNs (before other
+numbers), bigints (after numbers), sparse arrays (missing values are
+equivalent to undefined), and modifies it by ordering -0 before +0.
+*/
 export const compare = (
   a: Orderable,
   b: Orderable,
@@ -116,12 +116,12 @@ export const compare = (
 };
 
 /**
- * Returns a sorted array with values from an iterable, where each entry is
- * sorted according to the result of the given key function. The key function
- * must return one of the natively-sortable types in JavaScript -- number,
- * string, bigint -- or undefined, or null, or a (potentially nested) array of
- * such values.
- */
+Returns a sorted array with values from an iterable, where each entry is
+sorted according to the result of the given key function. The key function
+must return one of the natively-sortable types in JavaScript -- number,
+string, bigint -- or undefined, or null, or a (potentially nested) array of
+such values.
+*/
 export const sort = <Input>(
   input: Iterable<Input>,
   keyFn: (item: Input) => Orderable,

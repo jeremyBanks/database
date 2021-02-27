@@ -1,5 +1,5 @@
 /** @fileoverview Provides a composable typed SQL query string type implementing
-  * the driver.Query protocol for use with .query() and .exec() methods. */
+the driver.Query interface for use with .query() and .exec() methods. */
 
 // deno-lint-ignore-file
 
@@ -82,9 +82,9 @@ export class SQLBoundValue<Value> {
   constructor(readonly value: Value) {}
 }
 
-/**
- * Tag function constructing a SQLExpression with bound interpolated values.
- */
+/** Tags a SQL`...` string literal to produce a SQLString.
+Other SQLStrings can be interpolated into
+*/
 export const SQL = <BoundValues extends [...Array<unknown>]>(
   literals: TemplateStringsArray,
   ...values: BoundValues

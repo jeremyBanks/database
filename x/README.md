@@ -2,7 +2,7 @@
 
 https://deno.land/x/database@0.1.0/x
 
-Compatibility wrappers for various database libraries.
+Compatibility wrappers drivers for various database libraries.
 
 ## Contents
 

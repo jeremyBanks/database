@@ -1,10 +1,10 @@
 /** @fileoverview Package driver defines interfaces to be implemented by database drivers as used by package `x/database/sql`.
- *
- * Inspired by https://golang.org/src/database/sql/driver/driver.go.
- *
- * A class that implements one a type with optional sync and async versions of a
- * methods is expected to implement at least one of those versions.
- */
+
+ Inspired by https://golang.org/src/database/sql/driver/driver.go.
+
+ A class that implements one a type with optional sync and async versions of a
+ methods is expected to implement at least one of those versions.
+/
 
 // deno-lint-ignore-file no-empty-interface
 
