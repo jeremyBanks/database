@@ -82,7 +82,8 @@ export class SQLBoundValue<Value> {
   constructor(readonly value: Value) {}
 }
 
-/** Tags a SQL`...` string literal to produce a SQLString.
+/**
+Tags a SQL`...` string literal to produce a SQLString.
 Other SQLStrings can be interpolated into
 */
 export const SQL = <BoundValues extends [...Array<unknown>]>(

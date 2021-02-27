@@ -28,23 +28,8 @@ Stable releases are tagged with three-part [semver] version numbers such as
 Flexible type parameters can be valuable, but when practical they should provide
 unobtrusive defaults for users that don't need them.
 
-An underscore prefix on a module or directory name indicates that it's internal
-and isn't intended to be imported from outside of its parent directory. For
-example:
-
-- `/x/sqlite.ts` may import `/sql/driver.ts` because it has no
-  underscore-prefixes path components.
-- `/sql/sql.ts` may import `/_common/mod.ts` because it is also within
-  `/_common`'s parent directory, `/` (the project root).
-- `/sql/sql.ts` should not import `/x/_helper.ts` because it is outside of
-  `/x/_helper.ts`'s parent directory, `/x/`.
-- `/sql/sql.ts` should not import `/_common/_typing/rome.ts` because is is
-  outside of `/_common/_typing`'s parent directory, `/_common`.
-- User code may import `/sql/driver.ts`. It has are no underscore-prefixed path
-  components, so it's part of the module's public API.
-- User code should avoid importing `/_common/async.ts` or any other paths with
-  underscore-prefixed components. They are module-internal and have no stability
-  guarantees between versions.
+An underscore prefix on a module, directory, or identifier name indicates that
+it's internal and isn't intended to be imported from outside of its parent tree.
 
 ## License
 
