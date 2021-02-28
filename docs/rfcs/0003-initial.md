@@ -186,9 +186,9 @@ error ourselves instead of relying on the driver's behaviour.
 The exception is for prepared statements, which are used in the consumer
 interface even though they're not present in the driver interface yet. This is
 because they're not supported by one of the driver's we're currently working
-with (`deno-sqlite`), so we're going to just provide a shim implementation for
-now (just saving the query, not passing it to the database), and leave proper
-integration with supporting drivers for later.
+with (`deno-sqlite`), so we're going to just provide our shim implementation for
+now. We'll add an optional driver interface for preparing statements in the
+future.
 
 ## Cancellation, Timeouts, Context
 
@@ -202,8 +202,8 @@ will be considered for a future release.
 Once this library's driver interface is complete and stable, it is expected that
 driver libraries would implement the supporting interface themselves, without
 anything required in this repository. However, that can't happen while this is
-still under unstable development, so for now we will include driver interface
-implementations for a couple different database driver libraries:
+still under unstable development, so for now we will directly include driver
+interface implementations for a couple different database driver libraries:
 
 - `…/sqlite.ts` wrapping [`/x/sqlite/`](https://deno.land/x/sqlite), an
   [MIT-Licensed](https://github.com/dyedgreen/deno-sqlite/blob/master/LICENSE)
