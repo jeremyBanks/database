@@ -96,18 +96,19 @@ one or both variations of each method.
   - `.startTransaction[Sync](): driver.Transaction`
     - Starts a new transaction within in the connection.
   - `.lastInsertedId[Sync](): Value | undefined`
-     - The primary key of the last row inserted through this connection. If the
-       last query did not insert a row, the result of this method may be a
-       stale value or `undefined`.
+    - The primary key of the last row inserted through this connection. If the
+      last query did not insert a row, the result of this method may be a stale
+      value or `undefined`.
   - `.affectedRows[Sync](): number | undefined`
-     - The number of rows affected by the last query through this connection.
-       If the last query was of a type that could not affect any rows, the
-       result of this method may be a stale value or `undefined`.
+    - The number of rows affected by the last query through this connection. If
+      the last query was of a type that could not affect any rows, the result of
+      this method may be a stale value or `undefined`.
 - `driver.Transaction` interface
   - `.query[Sync](sql: string, arguments?: Array<Value>): AsyncIterable<Iterable<Value>>`
     - Executes a query against the database in the context of this transaction,
-      returning the results as an `AsyncIterable` of `Iterable` rows of `Value`s.
-      These iterables will not be used after the associated transaction has ended.
+      returning the results as an `AsyncIterable` of `Iterable` rows of
+      `Value`s. These iterables will not be used after the associated
+      transaction has ended.
   - `.commit[Sync](): void`
     - Ends the transaction, with any committed and saved. The transaction object
       will no longer be used.
@@ -177,17 +178,17 @@ async for now, even if the underlying driver supports sync operations.
 ### Implementation Notes
 
 Most of the interface described above is just a thin wrapper over the driver
-interface. In these cases, the implementation's main responsibility will be
-to enforce the invariants we promise for drivers. For example, if the user
-attempts to `.query()` a `sql.Transaction` from a closed connection, we should
-throw an error ourselves instead of relying on the driver's behaviour.
+interface. In these cases, the implementation's main responsibility will be to
+enforce the invariants we promise for drivers. For example, if the user attempts
+to `.query()` a `sql.Transaction` from a closed connection, we should throw an
+error ourselves instead of relying on the driver's behaviour.
 
 The exception is for prepared statements, which are used in the consumer
 interface even though they're not present in the driver interface yet. This is
 because they're not supported by one of the driver's we're currently working
-with (`deno-sqlite`), so we're going to just provide a shim implementation
-for now (just saving the query, not passing it to the database), and leave
-proper integration with supporting drivers for later.
+with (`deno-sqlite`), so we're going to just provide a shim implementation for
+now (just saving the query, not passing it to the database), and leave proper
+integration with supporting drivers for later.
 
 ## Cancellation, Timeouts, Context
 
@@ -201,8 +202,8 @@ will be considered for a future release.
 Once this library's driver interface is complete and stable, it is expected that
 driver libraries would implement the supporting interface themselves, without
 anything required in this repository. However, that can't happen while this is
-still under unstable development, so for now we will include our own driver
-interface implementations for a couple different database driver libraries:
+still under unstable development, so for now we will include driver interface
+implementations for a couple different database driver libraries:
 
 - `…/sqlite.ts` wrapping [`/x/sqlite/`](https://deno.land/x/sqlite), an
   [MIT-Licensed](https://github.com/dyedgreen/deno-sqlite/blob/master/LICENSE)
