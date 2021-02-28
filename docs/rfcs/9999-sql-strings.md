@@ -6,8 +6,8 @@
 
 ## Goals
 
-Safe and convenient dynamic query composition with <code>SQL\`…\`</code>
-strings for users of `x/database/sql/sql.ts`. Originally proposed in-part at
+Safe and convenient dynamic query composition with <code>SQL\`…\`</code> strings
+for users of `x/database/sql/sql.ts`. Originally proposed in-part at
 [dyedgreen/deno-sqlite#104](https://github.com/dyedgreen/deno-sqlite/pull/104).
 
 ## SQL Strings (`x/database/sql/string.ts`) 🆕

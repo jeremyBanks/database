@@ -12,6 +12,5 @@ don't need fine-grained control.
 `sql.Database` should delegate to a `sql.Connection`, which should delegate to a
 `sql.Transaction`.
 
-`sql.Transaction` should provide `exec`/`query`/`queryRow` methods through
-  a `.prepare()`ed instance.
-
+`sql.Transaction` should provide `exec`/`query`/`queryRow` methods through a
+`.prepare()`ed instance.

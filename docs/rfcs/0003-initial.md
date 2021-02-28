@@ -11,12 +11,12 @@ Deno currently has several great driver libraries for different database
 engines. However, each one provides a slightly different interface, with a
 slightly different set of functionality, creating friction for users who want to
 write code that works across database engines. This is similar to the position
-that Go was in that led to the creation of their database/sql library. Deno
+that Go was in that led to the creation of their `database/sql` library. Deno
 isn't exactly the same as Go, but they have a lot in common. With some changes,
 we can take Go's API design and their
-["Goals of the sql and sql/driver
-packages"](https://golang.org/src/database/sql/doc.txt) (below) as a starting
-point for our own library:
+["Goals of the `sql` and `sql/driver`
+packages"](https://golang.org/src/database/sql/doc.txt) document (below) as a
+starting point for our own library:
 
 > - Provide a generic database API for a variety of SQL or SQL-like databases.
   > There currently exist Go libraries for SQLite, MySQL, and Postgres, but all
