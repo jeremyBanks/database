@@ -141,9 +141,10 @@ be used which expects only the the JSON primitive types: `null`, `boolean`,
 ## Database Consumer API (`x/database/sql/sql.ts`)
 
 This is the primary interface for most users. `Value` below represents the
-driver-defined `Value` type for bindings and results.
+driver-defined `Value` type for bindings and results. The interface is entirely
+async for now, even if the underlying driver supports sync operations.
 
-- `sql.open(path, driver): sql.Database`
+- `sql.open(path, driver): Promise<sql.Database>`
   - Creates a database handle/connector with the given driver and path. May
     validate the arguments (path), but will not open a connection yet.
 - `sql.Database` class
@@ -171,6 +172,22 @@ driver-defined `Value` type for bindings and results.
       actually insert or affect any rows. (These should only be absent if the
       driver is certain that they're not relevant to executed query, or doesn't
       support them at all.)
+  - `.dispose(): Promise<void>`
+
+### Implementation Notes
+
+Most of the interface described above is just a thin wrapper over the driver
+interface. In these cases, the implementation's main responsibility will be
+to enforce the invariants we promise for drivers. For example, if the user
+attempts to `.query()` a `sql.Transaction` from a closed connection, we should
+throw an error ourselves instead of relying on the driver's behaviour.
+
+The exception is for prepared statements, which are used in the consumer
+interface even though they're not present in the driver interface yet. This is
+because they're not supported by one of the driver's we're currently working
+with (`deno-sqlite`), so we're going to just provide a shim implementation
+for now (just saving the query, not passing it to the database), and leave
+proper integration with supporting drivers for later.
 
 ## Cancellation, Timeouts, Context
 
