@@ -2,8 +2,8 @@
 
 **Date:** February 28, 2021
 
-**Status:** design and implementation are still incomplete, to be reviewed at
-[#3](https://github.com/jeremyBanks/database/pull/3).
+**Status:**
+[Your comments are requested!](https://github.com/jeremyBanks/database/pull/3)
 
 ## Background
 
@@ -54,9 +54,8 @@ starting point for our own library:
 ## Goals
 
 For this initial v0.1 release, we would like to provide a set of core
-capabilities that are enough to be useful, even if they're not very
-comprehensive or flexible. The driver and consumer interfaces may look more
-similar at this point than they will in the future.
+capabilities that are enough to be useful, even if they're not the most
+comprehensive, flexible, efficient, or convenient.
 
 Prior to v1.0, we do not make any guarantees about API stability
 ([as per semver](https://semver.org/spec/v2.0.0.html#spec-item-4)), but we
@@ -64,50 +63,65 @@ should still be thoughtful and try to avoid unnecessary breakage.
 
 ## Database Driver API (`x/database/sql/driver.ts`)
 
-`./driver.ts` exports interfaces for specific database driver libraries to
-implement for interoperability with `./sql.ts`'s generic interface, which uses
-these interfaces internally. Most users should have no reason to import these.
+Inspired by [`driver.go`](https://golang.org/src/database/sql/driver/driver.go),
+`./driver.ts` exports interfaces for database driver libraries to implement for
+interoperability with `./sql.ts`'s user interface. **Most users should have no
+reason to use these interfaces directly.** Note that drivers do not "register"
+themselves with this library as they do in with the Go library.
 
 Many of these interfaces define methods in both optional async and sync
 variants, such as `connect?(): Promise<Connection>` and
-`connectSync?(): Connection`. In these cases, drivers may implement one or both
-variations of each method.
+`connectSync?(): Connection`. In these cases, drivers may choose to implement
+one or both variations of each method.
 
 - `driver.WithDriver` interface
   - `.driver: Driver`
-  - Driver library modules should conventionally implement this interface
-    themselves by exporting an instance of their `Driver` implementation as
-    `.driver`. This is the entry point through which the other interfaces will
-    be accessed.
+  - Driver library modules should implement this interface themselves by
+    exporting an instance of their `Driver` implementation as `.driver`. This is
+    the entry point through which the other interfaces will be accessed.
     ```ts
     const mysqliteDriver = new MysqliteDriver();
     export { mysqliteDriver as driver };
     ```
-
 - `driver.Driver` interface
   - extends `driver.Opener`
-
 - `driver.Opener` interface
   - `.open[Sync](path: string): driver.Connector`
     - Prepares a connector object that can be used to make connections to a
       database with the given path.
-
 - `driver.Connector` interface
   - `.connect[Sync](): driver.Connection`
     - Returns a new connection to the database.
-
 - `driver.Connection` interface
   - `.startTransaction[Sync](): driver.Transaction`
-    - Starts a new transaction in the connection.
-
+    - Starts a new transaction within in the connection.
+  - `.lastInsertedId[Sync](): Value | undefined`
+     - The primary key of the last row inserted through this connection. If the
+       last query did not insert a row, the result of this method may be a
+       stale value or `undefined`.
+  - `.affectedRows[Sync](): number | undefined`
+     - The number of rows affected by the last query through this connection.
+       If the last query was of a type that could not affect any rows, the
+       result of this method may be a stale value or `undefined`.
 - `driver.Transaction` interface
-  - `.execute[Sync](sql: string, arguments?: Array): void`
-  - `.query(sql: string, arguments?: Array): AsyncIterable<Row>`
+  - `.query[Sync](sql: string, arguments?: Array<Value>): AsyncIterable<Iterable<Value>>`
+    - Executes a query against the database in the context of this transaction,
+      returning the results as an `AsyncIterable` of `Iterable` rows of `Value`s.
+      These iterables will not be used after the associated transaction has ended.
+  - `.commit[Sync](): void`
+    - Ends the transaction, with any committed and saved. The transaction object
+      will no longer be used.
+  - `.rollback[Sync](): void`
+    - Ends the transaction, with any changes rolled back. The transaction object
+      will no longer be used.
+  - `.startTransaction[Sync](): driver.Transaction`
+    - Starts a new child transaction within this transaction. The transaction
+      object will not be used again until the child transaction has ended.
 
 ### Driver `Meta` Type Information
 
 A driver SHOULD declare an associated `Meta` type using the `driver.Meta<{...}>`
-type function. This is currently used only to specify the type of values used by
+type function. This is currently used only to specify the `Value` type used by
 the driver for bound and result column values. The `Meta` type SHOULD be
 provided as the (optional) first type argument to every interface that is
 implemented from `driver.sql`.
@@ -126,9 +140,8 @@ be used which expects only the the JSON primitive types: `null`, `boolean`,
 
 ## Database Consumer API (`x/database/sql/sql.ts`)
 
-This is the primary interface for most users. Here, `Value` represents the
-driver-defined type for bound values and result columns values. It is typically
-a union including `string`, `number`, `null`, and others.
+This is the primary interface for most users. `Value` below represents the
+driver-defined `Value` type for bindings and results.
 
 - `sql.open(path, driver): sql.Database`
   - Creates a database handle/connector with the given driver and path. May

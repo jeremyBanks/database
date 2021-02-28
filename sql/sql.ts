@@ -3,7 +3,6 @@ import Context from "../_common/context.ts";
 import { assert, notImplemented } from "../_common/assertions.ts";
 
 import * as driver from "./driver.ts";
-import { SQLString } from "./strings.ts";
 
 export const open = async <
   Meta extends driver.BaseMeta = driver.BaseMeta,
