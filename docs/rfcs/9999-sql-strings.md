@@ -1,9 +1,8 @@
-# x/database/sql for Deno, Version 0.2
+# SQL Strings
 
 **Date:** March _dd_, 2021
 
-**Status:** incomplete and blocked by [./v0.1](./v0.1.md) and
-[#3](https://github.com/jeremyBanks/database/pull/3).
+**Status:** incomplete
 
 ## Goals
 
