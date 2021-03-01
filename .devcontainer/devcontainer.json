@@ -13,20 +13,11 @@
   "remoteUser": "vscode",
   "settings": {
     "cSpell.language": "en,en-US,en-CA,en-GB",
-    "cSpell.words": [
-      "deno",
-      "postgres",
-      "sqlite",
-      "wasm"
-    ],
     "deno.codeLens.implementations": true,
     "deno.codeLens.references": true,
-    "deno.enable": true,
     "deno.import_intellisense_origins": {
       "https://deno.land": true
     },
-    "deno.lint": true,
-    "deno.unstable": true,
     "editor.codeLens": true,
     "[javascript]": {
       "editor.defaultFormatter": "denoland.vscode-deno",
