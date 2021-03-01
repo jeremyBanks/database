@@ -93,8 +93,8 @@ one or both variations of each method.
     const connector = await sql.open("mysqlite:127.0.0.1:8090", mysqlite);
     ```
 - `driver.Driver` interface
-  - extends `driver.Opener`
-- `driver.Opener` interface
+  - extends `driver.ConnectorOpener`
+- `driver.ConnectorOpener` interface
   - `.open[Sync](path: string): driver.Connector`
     - Prepares a connector object that can be used to make connections to a
       database with the given path.
@@ -112,6 +112,8 @@ one or both variations of each method.
     - The number of rows affected by the last query through this connection. If
       the last query was of a type that could not affect any rows, the result of
       this method may be a stale value or `undefined`.
+  - `.close[Sync]()`
+    - close the connection.
 - `driver.Transaction` interface
   - `.query[Sync](sql: string, arguments?: Array<Value>): AsyncIterable<Iterable<Value>>`
     - Executes a query against the database in the context of this transaction,

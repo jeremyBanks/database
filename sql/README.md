@@ -51,17 +51,3 @@ in [Deno], inspired by Go's
   provides a set of interfaces (most optional, some required) that can be
   implemented by a driver module for it to support use with `sql.ts`. Most users
   should never need to import this.
-
-## Current Limitations
-
-- The code isn't finished and probably doesn't even run.
-- Timeouts and cancellation (contexts) are not implemented.
-- Connections are not pooled.
-- `sql.Database` only provides an async interface, even for sync drivers.
-- `sql.Database` is lacking a lot of convenience methods.
-- `driver` provides no optional fast-paths interfaces for optimized drivers.
-- No isolation mode options.
-- No result row names.
-- No result type mapping.
-- No tests.
-- No docs.

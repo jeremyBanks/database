@@ -8,8 +8,9 @@ export type Meta = driver.Meta<{
   Value: Value;
 }>;
 
-export class Driver implements driver.Driver<Meta>, driver.Opener<Meta> {
-  openSync(path: string) {
+export class Driver
+  implements driver.Driver<Meta>, driver.ConnectorOpener<Meta> {
+  openConnectorSync(path: string) {
     return new Connector(this, path);
   }
 }
@@ -32,13 +33,21 @@ export class Connection implements driver.Connection<Meta> {
     private readonly handle: sqlite.DB,
   ) {}
 
-  startSync() {
+  startTransactionSync() {
     const transaction = new Transaction(this.driver, this.handle, this);
     this.handle.query(`SAVEPOINT ${transaction.name}`).return();
     return transaction;
   }
 
-  dispose() {
+  lastInsertedIdSync(): Value {
+    return this.handle.lastInsertRowId;
+  }
+
+  affectedRowsSync(): number {
+    return this.handle.changes;
+  }
+
+  closeSync() {
     this.handle.close();
   }
 }
