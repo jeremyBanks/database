@@ -112,7 +112,7 @@ one or both variations of each method.
     - The number of rows affected by the last query through this connection. If
       the last query was of a type that could not affect any rows, the result of
       this method may be a stale value or `undefined`.
-  - `.close[Sync]()`
+  - `.close[Sync](): void`
     - close the connection.
 - `driver.Transaction` interface
   - `.query[Sync](sql: string, arguments?: Array<Value>): AsyncIterable<Iterable<Value>>`
