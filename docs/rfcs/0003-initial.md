@@ -80,8 +80,17 @@ one or both variations of each method.
     exporting an instance of their `Driver` implementation as `.driver`. This is
     the entry point through which the other interfaces will be accessed.
     ```ts
+    // driver
+    import * as driver from "/x/database/sql/driver.ts";
+    class MysqliteDriver implements driver.Driver { … };
     const mysqliteDriver = new MysqliteDriver();
     export { mysqliteDriver as driver };
+    ```
+    ```ts
+    // consumer
+    import * as sql from "/x/database/sql/sql.ts";
+    import * as mysqlite from "./mysqlite.ts";
+    const connector = await sql.open("mysqlite:127.0.0.1:8090", mysqlite);
     ```
 - `driver.Driver` interface
   - extends `driver.Opener`
@@ -111,10 +120,10 @@ one or both variations of each method.
       transaction has ended.
   - `.commit[Sync](): void`
     - Ends the transaction, with any committed and saved. The transaction object
-      will no longer be used.
+      will not be used again.
   - `.rollback[Sync](): void`
     - Ends the transaction, with any changes rolled back. The transaction object
-      will no longer be used.
+      will not be used again.
   - `.startTransaction[Sync](): driver.Transaction`
     - Starts a new child transaction within this transaction. The transaction
       object will not be used again until the child transaction has ended.
@@ -132,7 +141,7 @@ type Meta = driver.Meta<{
   Value: bigint | number | null
 }>;
 
-export class Connection extends driver.Connection<Meta> { … }
+export class Driver extends driver.Driver<Meta> { … }
 ```
 
 If a driver does not define and use its own `Meta` type, a default `Meta` will
@@ -150,29 +159,44 @@ async for now, even if the underlying driver supports sync operations.
     validate the arguments (path), but will not open a connection yet.
 - `sql.Database` class
   - `.connect(): Promise<sql.Connection>`
-    - Opens a new open connection to the database. In the future this may be
-      reused from a connection pool instead.
+    - Opens a new open connection to the database. In the future a connection
+      pool will be maintained instead of always opening new connections.
 - `sql.Connection` class
   - `.startTransaction(): Promise<sql.Transaction>`
-  - `.close(): Promise<void>` closes the connection.
+    - Starts a new transaction in the connection. If a top-level transaction is
+      already in progress on this connection, this will block until it is
+      finished.
+  - `.close(): Promise<void>`
+    - Closes the connection. If there is an active transaction, this will block
+      until it is finished.
 - `sql.Transaction` class
-  - `.prepareStatement(): Promise<sql.PreparedStatement>`
-  - `.commit(): Promise<void>` ends the transaction with changes committed.
-  - `.rollback(): Promise<void>` ends the transaction with changes rolled back.
+  - `.prepareStatement(query: string): Promise<sql.PreparedStatement>`
+    - Prepares a SQL query for execution in this transaction.
+  - `.commit(): Promise<void>`
+    - Completes the transaction with changes committed.
+  - `.rollback(): Promise<void>`
+    - Completes the transaction with changes rolled back.
+  - `.startTransaction(): Promise<sql.Transaction>`
+    - Starts a nested transaction within this transaction. If a nested
+      transaction is already in progress, this will block until it is finished.
+      While a nested transaction is in progress, queries should be executed
+      through it, not the parent transaction.
 - `sql.PreparedStatement` class
   - `.query(args?): AsyncGenerator<Iterator<Value>>`
-    - Executes a query and incrementally reads rows from the database. The
-      iterator should be disposed of by calling `.return()` (which a `for await`
-      statement will do automatically).
+    - Executes the query with an optional array of bound values, and
+      incrementally reads rows from the database. The iterator should be
+      disposed of by calling `.return()` (which a `for await` statement will do
+      automatically).
   - `.queryRow(args?): Promise<Array<Value>>`
-    - Executes a query returning only the first row of results, as an array.
+    - Executes the query with an optional array of bound values, returning only
+      the first row of results, as an array.
   - `.exec(args?): Promise<{ insertedRowId?: Value, affectedRowCount?: number }>`
-    - Executes a query without returning any result rows. A `insertedRowId` and
-      `affectedRowCount` value may be returned, but note that for some drivers
-      these values may reflect a previous query if the executed one did not
-      actually insert or affect any rows. (These should only be absent if the
-      driver is certain that they're not relevant to executed query, or doesn't
-      support them at all.)
+    - Executes the query with an optional array of bound values, without
+      returning any result rows. A `insertedRowId` and `affectedRowCount` value
+      may be returned, but note that for some drivers these values may reflect a
+      previous query if the executed one did not actually insert or affect any
+      rows. (These should only be absent if the driver is certain that they're
+      not relevant to executed query, or doesn't support them at all.)
   - `.dispose(): Promise<void>`
 
 ### Implementation Notes
@@ -187,8 +211,7 @@ The exception is for prepared statements, which are used in the consumer
 interface even though they're not present in the driver interface yet. This is
 because they're not supported by one of the driver's we're currently working
 with (`deno-sqlite`), so we're going to just provide our shim implementation for
-now. We'll add an optional driver interface for preparing statements in the
-future.
+now. We'll add an optional interface for supporting drivers in the future.
 
 ## Cancellation, Timeouts, Context
 
