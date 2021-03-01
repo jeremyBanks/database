@@ -6,12 +6,10 @@
     "denoland.vscode-deno",
     "eamodio.gitlens",
     "ms-vscode.theme-1337",
-    "streetsidesoftware.code-spell-checker",
     "tyriar.sort-lines"
   ],
   "remoteUser": "vscode",
   "settings": {
-    "cSpell.language": "en,en-US,en-CA,en-GB",
     "deno.codeLens.implementations": true,
     "deno.codeLens.references": true,
     "deno.import_intellisense_origins": {
