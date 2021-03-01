@@ -104,7 +104,7 @@ one or both variations of each method.
 - `driver.Connection` interface
   - `.startTransaction[Sync](): driver.Transaction`
     - Starts a new transaction within in the connection.
-  - `.lastInsertedId[Sync](): Value | undefined`
+  - `.lastInsertedId[Sync](): ResultValue | undefined`
     - The primary key of the last row inserted through this connection. If the
       last query did not insert a row, the result of this method may be a stale
       value or `undefined`.
@@ -115,10 +115,10 @@ one or both variations of each method.
   - `.close[Sync](): void`
     - close the connection.
 - `driver.Transaction` interface
-  - `.query[Sync](sql: string, arguments?: Array<Value>): AsyncIterable<Iterable<Value>>`
+  - `.query[Sync](sql: string, arguments?: Array<BoundValue>): AsyncIterable<Iterable<BoundValue>>`
     - Executes a query against the database in the context of this transaction,
       returning the results as an `AsyncIterable` of `Iterable` rows of
-      `Value`s. These iterables will not be used after the associated
+      `ResultValue`s. These iterables will not be used after the associated
       transaction has ended.
   - `.commit[Sync](): void`
     - Ends the transaction, with any committed and saved. The transaction object
@@ -133,14 +133,15 @@ one or both variations of each method.
 ### Driver `Meta` Type Information
 
 A driver SHOULD declare an associated `Meta` type using the `driver.Meta<{...}>`
-type function. This is currently used only to specify the `Value` type used by
-the driver for bound and result column values. The `Meta` type SHOULD be
-provided as the (optional) first type argument to every interface that is
-implemented from `driver.sql`.
+type function. This is currently used only to specify the types used by the
+driver for bound and result column values. The `Meta` type SHOULD be provided as
+the (optional) first type argument to every interface that is implemented from
+`driver.sql`.
 
 ```ts
 type Meta = driver.Meta<{
-  Value: bigint | number | null
+  BoundValue: bigint | number | null | Date,
+  ResultValue: bigint | number | null
 }>;
 
 export class Driver extends driver.Driver<Meta> { … }
@@ -153,9 +154,10 @@ be used which expects only the the JSON primitive types: `null`, `boolean`,
 ## Database Consumer API (`x/database/sql/sql.ts`)
 
 Inspired by [`sql.go`](https://golang.org/src/database/sql/sql.go), this is
-primary interface, which most users will use. `Value` below represents the
-driver-defined `Value` type for bindings and results. The interface is entirely
-async for now, even if the underlying driver supports sync operations.
+primary interface, which most users will use. `BoundValue` and `ResultValue`
+below represents the driver-defined types for bindings and results. The
+interface is entirely async for now, even if the underlying driver supports sync
+operations.
 
 - `sql.open(path, driver): Promise<sql.Database>`
   - Creates a database handle/connector with the given driver and path. May
@@ -170,7 +172,8 @@ async for now, even if the underlying driver supports sync operations.
       active transaction in progress on this connection, this will block until
       it is finished.
   - `.prepareStatement(query: string): Promise<sql.PreparedStatement>`
-    - Prepares a SQL query for execution in this connection without a transaction.
+    - Prepares a SQL query for execution in this connection without a
+      transaction.
   - `.close(): Promise<void>`
     - Closes the connection. If there is an active transaction, this will block
       until it is finished.
@@ -187,15 +190,15 @@ async for now, even if the underlying driver supports sync operations.
       While a nested transaction is in progress, queries should be executed
       through the inner-most active transaction, not the parent transaction.
 - `sql.PreparedStatement` class
-  - `.query(args?): AsyncGenerator<Iterator<Value>>`
+  - `.query(args?: Array<BoundValue>): AsyncGenerator<Iterator<ResultValue>>`
     - Executes the query with an optional array of bound values, and
       incrementally reads rows from the database. The iterator should be
       disposed of by calling `.return()` (which a `for await` statement will do
       automatically).
-  - `.queryRow(args?): Promise<Array<Value>>`
+  - `.queryRow(args?: Array<BoundValue>: Promise<Array<ResultValue>>`
     - Executes the query with an optional array of bound values, returning only
       the first row of results, as an array.
-  - `.exec(args?): Promise<{ insertedRowId?: Value, affectedRowCount?: number }>`
+  - `.exec(args?: Array<BoundValue>: Promise<{ insertedRowId?: ResultValue, affectedRowCount?: number }>`
     - Executes the query with an optional array of bound values, without
       returning any result rows. A `insertedRowId` and `affectedRowCount` value
       may be returned, but note that for some drivers these values may reflect a
