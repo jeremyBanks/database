@@ -28,6 +28,8 @@ export class Connector implements driver.Connector<Meta> {
 }
 
 export class Connection implements driver.Connection<Meta> {
+  private activeTransaction?: Transaction;
+
   constructor(
     readonly driver: Driver,
     private readonly handle: sqlite.DB,
@@ -35,7 +37,7 @@ export class Connection implements driver.Connection<Meta> {
 
   startTransactionSync() {
     const transaction = new Transaction(this.driver, this.handle, this);
-    this.handle.query(`SAVEPOINT ${transaction.name}`).return();
+    this.handle.query("BEGIN DEFERRED TRANSACTION").return();
     return transaction;
   }
 
@@ -53,8 +55,7 @@ export class Connection implements driver.Connection<Meta> {
 }
 
 export class Transaction implements driver.Transaction<Meta> {
-  static nextId = 1;
-  readonly name: string;
+  private childTransaction?: Transaction;
 
   constructor(
     readonly driver: Driver,

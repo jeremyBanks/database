@@ -152,7 +152,8 @@ be used which expects only the the JSON primitive types: `null`, `boolean`,
 
 ## Database Consumer API (`x/database/sql/sql.ts`)
 
-This is the primary interface for most users. `Value` below represents the
+Inspired by [`sql.go`](https://golang.org/src/database/sql/sql.go), this is
+primary interface, which most users will use. `Value` below represents the
 driver-defined `Value` type for bindings and results. The interface is entirely
 async for now, even if the underlying driver supports sync operations.
 
@@ -182,7 +183,7 @@ async for now, even if the underlying driver supports sync operations.
     - Starts a nested transaction within this transaction. If a nested
       transaction is already in progress, this will block until it is finished.
       While a nested transaction is in progress, queries should be executed
-      through it, not the parent transaction.
+      through the inner-most active transaction, not the parent transaction.
 - `sql.PreparedStatement` class
   - `.query(args?): AsyncGenerator<Iterator<Value>>`
     - Executes the query with an optional array of bound values, and
