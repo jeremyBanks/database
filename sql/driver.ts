@@ -1,18 +1,13 @@
-/** @fileoverview Package driver defines interfaces to be implemented by database drivers as used by package `x/database/sql`.
-
- Inspired by https://golang.org/src/database/sql/driver/driver.go.
-*/
-
 // deno-lint-ignore-file no-empty-interface
 
-/** Type metadata associated with a driver. */
 export interface BaseMeta {
-  /** The allowed types for Values passed into or returned from this driver. */
-  Value: unknown;
+  BoundValue: unknown;
+  ResultValue: unknown;
 }
 
 interface MetaDefaults extends BaseMeta {
-  Value: null | boolean | number | string;
+  BoundValue: null | boolean | number | string;
+  ResultValue: null | boolean | number | string;
 }
 
 export type Meta<Opts extends Partial<BaseMeta>> = {
@@ -37,12 +32,10 @@ export interface ConnectorOpener<Meta extends BaseMeta = BaseMeta> {
 }
 
 export interface Connector<Meta extends BaseMeta = BaseMeta> {
-  /** Opens a new connection to the database. */
   connect?(): Promise<Connection<Meta>>;
   connectSync?(): Connection<Meta>;
 }
 
-/** A database connection. */
 export interface Connection<Meta extends BaseMeta = BaseMeta>
   extends StatementPreparer<Meta>, TransactionStarter<Meta> {
 }
@@ -75,36 +68,36 @@ export interface PreparedStatement<Meta extends BaseMeta = BaseMeta>
 
 export interface Queryer<Meta extends BaseMeta = BaseMeta> {
   query?(
-    values: Array<Meta["Value"]>,
+    values: Array<Meta["BoundValue"]>,
   ): Rows<Meta>;
   querySync?(
-    values: Array<Meta["Value"]>,
+    values: Array<Meta["BoundValue"]>,
   ): RowsSync<Meta>;
 }
 
 export interface Execer<Meta extends BaseMeta = BaseMeta> {
   exec?(
-    values: Array<Meta["Value"]>,
+    values: Array<Meta["BoundValue"]>,
   ): Promise<ExecResult<Meta>>;
   execSync?(
-    values: Array<Meta["Value"]>,
+    values: Array<Meta["BoundValue"]>,
   ): ExecResult<Meta>;
 }
 
 export interface Rows<Meta extends BaseMeta = BaseMeta>
-  extends AsyncIterable<Iterable<Meta["Value"]>> {}
+  extends AsyncIterable<Iterable<Meta["ResultValue"]>> {}
 
 export interface RowsSync<Meta extends BaseMeta = BaseMeta>
-  extends Iterable<Iterable<Meta["Value"]>> {}
+  extends Iterable<Iterable<Meta["ResultValue"]>> {}
 
 export interface ExecResult<Meta extends BaseMeta = BaseMeta> {
   readonly rowsAffected: number | null;
-  readonly lastInsertId: Meta["Value"];
+  readonly lastInsertId: Meta["ResultValue"];
 }
 
 export interface Query<
   Meta extends BaseMeta = BaseMeta,
-  Args extends Array<Meta["Value"]> = Array<Meta["Value"]>,
+  Args extends Array<Meta["BoundValue"]> = Array<Meta["BoundValue"]>,
 > {
   readonly sql: string;
   readonly args: Args;

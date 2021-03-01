@@ -1,8 +1,8 @@
 import { asserts } from "../_common/deps.ts";
 
-import * as sql from "./sql.ts";
+import * as sql from "../sql/sql.ts";
 
-import * as sqlite from "../x/sqlite.ts";
+import * as sqlite from "./sqlite.ts";
 
 Deno.test("create, count, commit", async () => {
   const connector = await sql.open(":memory:", sqlite);

@@ -16,10 +16,6 @@ export const open = async <
   return new Database<Meta, Driver>(driver, connector);
 };
 
-/**
-Database is a database handle representing a pool of zero or more underlying
-connections.
-*/
 export class Database<
   Meta extends driver.BaseMeta,
   Driver extends driver.Driver<Meta> = driver.Driver<Meta>,

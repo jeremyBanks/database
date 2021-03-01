@@ -2,10 +2,19 @@ import * as sqlite from "https://deno.land/x/sqlite@v2.3.2/mod.ts";
 
 import * as driver from "../sql/driver.ts";
 
-export type Value = null | boolean | number | string | bigint | Uint8Array;
+export type ResultValue =
+  | null
+  | boolean
+  | number
+  | string
+  | bigint
+  | Uint8Array;
+
+export type BoundValue = ResultValue | Date;
 
 export type Meta = driver.Meta<{
-  Value: Value;
+  BoundValue: BoundValue;
+  ResultValue: ResultValue;
 }>;
 
 export class Driver
@@ -28,7 +37,7 @@ export class Connector implements driver.Connector<Meta> {
 }
 
 export class Connection implements driver.Connection<Meta> {
-  private activeTransaction?: Transaction;
+  _childTransaction?: Transaction;
 
   constructor(
     readonly driver: Driver,
@@ -36,12 +45,18 @@ export class Connection implements driver.Connection<Meta> {
   ) {}
 
   startTransactionSync() {
-    const transaction = new Transaction(this.driver, this.handle, this);
+    if (this._childTransaction !== undefined) {
+      throw new Error(
+        ".startTransaction() but we already have a child transaction",
+      );
+    }
     this.handle.query("BEGIN DEFERRED TRANSACTION").return();
+    const transaction = new Transaction(this.driver, this.handle, this);
+    this._childTransaction = transaction;
     return transaction;
   }
 
-  lastInsertedIdSync(): Value {
+  lastInsertedIdSync(): ResultValue {
     return this.handle.lastInsertRowId;
   }
 
@@ -55,28 +70,65 @@ export class Connection implements driver.Connection<Meta> {
 }
 
 export class Transaction implements driver.Transaction<Meta> {
-  private childTransaction?: Transaction;
+  private depth: number;
+  _childTransaction?: Transaction;
 
   constructor(
     readonly driver: Driver,
-    private readonly connectionHandle: sqlite.DB,
-    parent: Transaction | Connection,
+    private readonly handle: sqlite.DB,
+    private readonly parent: Transaction | Connection,
   ) {
-    if (parent instanceof Transaction) {
-      this.name = `${parent.name}_${Transaction.nextId}`;
+    if (this.parent instanceof Connection) {
+      this.depth = 1;
     } else {
-      this.name = `transaction_${Transaction.nextId}`;
+      this.depth = this.parent.depth + 1;
     }
-    Transaction.nextId += 1;
+  }
+
+  startTransactionSync() {
+    if (this._childTransaction !== undefined) {
+      throw new Error(
+        ".startTransaction() but we already have a child transaction",
+      );
+    }
+
+    // Depth is a unique identifier because there can not be multiple concurrent
+    // transactions at the same depth in the same connection in SQLite.
+    this.handle.query(`SAVEPOINT TRANSACTION_${this.depth}`).return();
+    const transaction = new Transaction(this.driver, this.handle, this);
+    this._childTransaction = transaction;
+    return transaction;
   }
 
   commitSync(): undefined {
-    this.connectionHandle.query(`RELEASE ${this.name}`).return();
+    if (this.parent._childTransaction !== this) {
+      throw new Error(
+        ".commit() called but transaction was already finished",
+      );
+    }
+
+    this.parent._childTransaction = undefined;
+    if (this.parent instanceof Connection) {
+      this.handle.query("COMMIT TRANSACTION").return();
+    } else {
+      this.handle.query(`RELEASE TRANSACTION_${this.depth}`).return();
+    }
     return;
   }
 
   rollbackSync(): undefined {
-    this.connectionHandle.query(`ROLLBACK TO ${this.name}`).return();
+    if (this.parent._childTransaction !== this) {
+      throw new Error(
+        ".rollback() called but transaction was already finished",
+      );
+    }
+
+    this.parent._childTransaction = undefined;
+    if (this.parent instanceof Connection) {
+      this.handle.query("ROLLBACK TRANSACTION").return();
+    } else {
+      this.handle.query(`ROLLBACK TO TRANSACTION_${this.depth}`).return();
+    }
     return;
   }
 }
@@ -88,11 +140,11 @@ export class PreparedStatement implements driver.PreparedStatement {
     private readonly sql: string,
   ) {}
 
-  querySync(values: Array<Value>) {
+  querySync(values: Array<BoundValue>) {
     return this.connectionHandle.query(this.sql, values);
   }
 
-  execSync(values: Array<Value>): driver.ExecResult<Meta> {
+  execSync(values: Array<BoundValue>): driver.ExecResult<Meta> {
     this.connectionHandle.query(this.sql, values).return();
     return {
       rowsAffected: this.connectionHandle.changes,

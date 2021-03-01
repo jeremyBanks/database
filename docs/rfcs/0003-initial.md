@@ -1,9 +1,9 @@
 # x/database/sql for Deno, Version 0.1
 
-**Date:** February 28–March 1, 2021
+**Start Date:** February 28, 2021
 
-**Status:**
-[Your comments are requested!](https://github.com/jeremyBanks/database/pull/3)
+**Design & Implementation Review:**
+[database#3](https://github.com/jeremyBanks/database/pull/3)
 
 ## Background
 
@@ -166,9 +166,11 @@ async for now, even if the underlying driver supports sync operations.
       pool will be maintained instead of always opening new connections.
 - `sql.Connection` class
   - `.startTransaction(): Promise<sql.Transaction>`
-    - Starts a new transaction in the connection. If a top-level transaction is
-      already in progress on this connection, this will block until it is
-      finished.
+    - Starts a new transaction in the connection. If if there is an already an
+      active transaction in progress on this connection, this will block until
+      it is finished.
+  - `.prepareStatement(query: string): Promise<sql.PreparedStatement>`
+    - Prepares a SQL query for execution in this connection without a transaction.
   - `.close(): Promise<void>`
     - Closes the connection. If there is an active transaction, this will block
       until it is finished.
@@ -274,7 +276,7 @@ non-essential sugar.
 
 ### "Managed Transactions"
 
-I would like to have what Sequelize calls
+I would like to have what Sequelize calls a
 ["managed transactions" interface](https://sequelize.org/master/manual/transactions.html#managed-transactions),
 where an async callback function's settlement result (returning or throwing) is
 used to implicitly commit or rollback a transaction.

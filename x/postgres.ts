@@ -9,7 +9,8 @@ interface JsonArray extends Array<Json> {}
 interface JsonRecord extends Record<string, Json> {}
 
 export type Meta = driver.Meta<{
-  Value: Json | Date;
+  BoundValue: Json | Date;
+  ResultValue: Json | Date;
 }>;
 
 export class Driver implements driver.Driver<Meta> {}
