@@ -67,7 +67,7 @@ Inspired by [`driver.go`](https://golang.org/src/database/sql/driver/driver.go),
 `./driver.ts` exports interfaces for database driver libraries to implement for
 interoperability with `./sql.ts`'s user interface. **Most users should have no
 reason to use these interfaces directly.** Note that drivers do not "register"
-themselves with this library as they do in with the Go library.
+themselves with this library as they do in with the Go package.
 
 Many of these interfaces define methods in both optional async and sync
 variants, such as `connect?(): Promise<Connection>` and
@@ -216,12 +216,7 @@ because they're not supported by one of the driver's we're currently working
 with (`deno-sqlite`), so we're going to just provide our shim implementation for
 now. We'll add an optional interface for supporting drivers in the future.
 
-## Cancellation, Timeouts, Context
-
-Cancellation and timeouts are not supported in this release. Something like Go's
-[Context](https://blog.golang.org/context), or potentially using
-[AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController),
-will be considered for a future release.
+### Tagged Strings
 
 ## Included Driver Implementations (`x/database/x/…`)
 
@@ -237,3 +232,41 @@ interface implementations for a couple different database driver libraries:
 - `…/postgres.ts` wrapping [`/x/postgres/`](https://deno.land/x/postgres), an
   [MIT-Licensed](https://github.com/denodrivers/postgres#license) asynchronous
   PostgreSQL client library.
+
+## Potential Future Enhancements
+
+Ideas that are out-of-scope for this minimal initial release but we might like
+to consider for the future.
+
+### Connection Pooling
+
+`sql.Database` should probably implement connection pooling like Go's `sql.DB`.
+
+### Simple Implicit Delegation
+
+As the Go package supports, we should allow simple implicit delegation/let users
+skip boilerplate when they don't care. You should be able to call
+`await opener.queryRow("SELECT 2")` and have `sql.ts` implicitly open a
+connection and start a transaction, instead of needing to do so explicitly.
+
+As with the Go package, optional interfaces could be later added for drivers
+that can provide more direct and efficient ways to preform these operation.
+
+### Cancellation, Timeouts, Context
+
+Cancellation and timeouts are not supported in this release. Something like Go's
+[Context](https://blog.golang.org/context), or potentially using
+[AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController),
+will be considered for a future release.
+
+### "Managed Transactions"
+
+I would like to have what Sequelize calls
+["managed transactions" interface](https://sequelize.org/master/manual/transactions.html#managed-transactions),
+where an async callback function's settlement result (returning or throwing) is
+used to implicitly commit or rollback a transaction.
+
+### Synchronous Consumer Interface
+
+If a driver implements `-Sync` methods, our user interface should also support
+appropriate corresponding `-Sync` methods of its own.
