@@ -1,6 +1,6 @@
 # x/database/sql for Deno, Version 0.1
 
-**Date:** February 28, 2021
+**Date:** February 28–March 1, 2021
 
 **Status:**
 [Your comments are requested!](https://github.com/jeremyBanks/database/pull/3)

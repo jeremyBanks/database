@@ -7,8 +7,7 @@
     "eamodio.gitlens",
     "ms-vscode.theme-1337",
     "streetsidesoftware.code-spell-checker",
-    "tyriar.sort-lines",
-    "usernamehw.errorlens"
+    "tyriar.sort-lines"
   ],
   "remoteUser": "vscode",
   "settings": {
@@ -72,9 +71,6 @@
       }
     },
     "editor.tabSize": 2,
-    "editor.fontFamily": "\"JetBrains Mono\", \"Fira Code\", \"Roboto Mono\", monospace",
-    "editor.fontSize": 13,
-    "editor.fontLigatures": true,
     "editor.formatOnSave": true,
     "editor.minimap.maxColumn": 80,
     "editor.minimap.showSlider": "always",
