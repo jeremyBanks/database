@@ -1,5 +1,6 @@
 import { fs } from "./_common/deps.ts";
 
+// Generates a test for each .ts file to verify that it can be imported.
 try {
   const cwd = Deno.cwd();
   for await (const file of fs.expandGlob("**/*.ts")) {

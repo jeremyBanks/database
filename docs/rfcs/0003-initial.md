@@ -53,9 +53,9 @@ starting point for our own library:
 
 ## Goals
 
-For this initial v0.1 release, we would like to provide a set of core
-capabilities that are enough to be useful, even if they're not the most
-comprehensive, flexible, efficient, or convenient.
+For this initial v0.1 release, we would like to provide the minimal set of core
+capabilities that are enough to be useful, even if they may not be as
+comprehensive, flexible, efficient, or convenient as we'd like.
 
 Prior to v1.0, we do not make any guarantees about API stability
 ([as per semver](https://semver.org/spec/v2.0.0.html#spec-item-4)), but we
