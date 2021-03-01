@@ -1,4 +1,3 @@
-import Context from "../_common/context.ts";
 import { notImplemented } from "../_common/assertions.ts";
 
 import * as driver from "./driver.ts";
@@ -10,7 +9,6 @@ export const open = async <
   path: string,
   driverModule: { driver: Driver },
 ): Promise<Database<Meta>> => {
-  const context = Context.TODO;
   const driver = driverModule.driver;
   const connector = await driver.openConnector?.(path) ??
     driver.openConnectorSync?.(path) ??
@@ -19,7 +17,7 @@ export const open = async <
 };
 
 /**
-Database is a database handle representing a pool of zero or more underlying 
+Database is a database handle representing a pool of zero or more underlying
 connections.
 */
 export class Database<
@@ -32,7 +30,6 @@ export class Database<
   ) {}
 
   async connect() {
-    const context = Context.TODO;
     const connection = await this.driverConnector.connect?.() ??
       this.driverConnector.connectSync?.() ??
       notImplemented("driver missing .connect[Sync] implementation");
@@ -53,7 +50,6 @@ export class Connection<
   async transaction<Result>(
     f: (transaction: Transaction<Meta, Driver>) => Result,
   ): Promise<Result> {
-    const context = Context.TODO;
     const driverTransaction =
       await this.driverConnection.startTransaction?.() ??
         this.driverConnection.startTransactionSync?.() ??
@@ -90,8 +86,6 @@ export class Transaction<
   async transaction<Result>(
     f: (transaction: Transaction<Meta, Driver>) => Result,
   ): Promise<Result> {
-    const context = Context.TODO;
-
     if (this.child) {
       throw new TypeError(
         "can not .transaction() this transaction while it has an active child transaction.",
@@ -146,8 +140,6 @@ export class Transaction<
     query: string,
     args: Array<Meta["Value"]>,
   ): AsyncGenerator<Iterable<Meta["Value"]>> {
-    const context = Context.TODO;
-
     const statement = await this.driverTransaction.prepareStatement?.(query) ??
       this.driverTransaction.prepareStatementSync?.(query) ??
       notImplemented(
