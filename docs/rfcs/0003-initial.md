@@ -216,8 +216,6 @@ because they're not supported by one of the driver's we're currently working
 with (`deno-sqlite`), so we're going to just provide our shim implementation for
 now. We'll add an optional interface for supporting drivers in the future.
 
-### Tagged Strings
-
 ## Included Driver Implementations (`x/database/x/…`)
 
 Once this library's driver interface is complete and stable, it is expected that
@@ -259,14 +257,24 @@ Cancellation and timeouts are not supported in this release. Something like Go's
 [AbortController](https://developer.mozilla.org/en-US/docs/Web/API/AbortController),
 will be considered for a future release.
 
+### Synchronous Consumer Interface
+
+If a driver implements `-Sync` methods, our user interface should also support
+appropriate corresponding `-Sync` methods of its own.
+
+### `driver.Query` Interface and <code>SQL\`…\`</code> Strings
+
+`driver.Query` will be a generic interface that can be implemented to provide a
+SQL string and optionally bound parameters to a query. We will provide an
+implementation in the form of <code>SQL\`…\`</code> strings that can be safely
+interpolated with bound values and dynamic identifiers.
+[This was one of my motivations for working on this
+library](https://github.com/dyedgreen/deno-sqlite/pull/104). But it's
+non-essential sugar.
+
 ### "Managed Transactions"
 
 I would like to have what Sequelize calls
 ["managed transactions" interface](https://sequelize.org/master/manual/transactions.html#managed-transactions),
 where an async callback function's settlement result (returning or throwing) is
 used to implicitly commit or rollback a transaction.
-
-### Synchronous Consumer Interface
-
-If a driver implements `-Sync` methods, our user interface should also support
-appropriate corresponding `-Sync` methods of its own.
