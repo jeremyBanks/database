@@ -79,15 +79,8 @@
     ],
     "editor.wordWrap": "on",
     "editor.wrappingIndent": "indent",
-    "errorLens.enabledDiagnosticLevels": [
-      "error",
-      "warning",
-      "info"
-    ],
-    "errorLens.onSave": true,
     "explorer.sortOrder": "filesFirst",
     "files.autoSave": "onFocusChange",
-    "files.eol": "\n",
     "files.exclude": {
       ".devcontainer": true,
       ".github": true,

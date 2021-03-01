@@ -15,18 +15,6 @@ export function assert<T>(
   }
 }
 
-/** Converts a value to the untyped `any` type. */
-// deno-lint-ignore no-explicit-any
-export function untyped(x: any): any {
-  return x;
-}
-
-/** Converts a value to the untyped `unknown` type. */
-// deno-lint-ignore no-explicit-any
-export function unknown(x: any): unknown {
-  return x;
-}
-
 /** Converts `any` or `unknown`-typed values to `never`. */
 export function typed<T>(x: T): unknown extends T ? never : T {
   // deno-lint-ignore no-explicit-any
