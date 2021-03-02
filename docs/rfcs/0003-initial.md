@@ -74,11 +74,11 @@ variants, such as `connect?(): Promise<Connection>` and
 `connectSync?(): Connection`. In these cases, drivers may choose to implement
 one or both variations of each method.
 
-- `driver.WithDriver` interface
+- `driver.Module` interface
   - `.driver: Driver`
-  - Driver library modules should implement this interface themselves by
-    exporting an instance of their `Driver` implementation as `.driver`. This is
-    the entry point through which the other interfaces will be accessed.
+  - Driver library modules should implicit implement this interface themselves
+    by exporting an instance of their `Driver` implementation as `.driver`. This
+    is the entry point through which the other interfaces will be accessed.
     ```ts
     // driver
     import * as driver from "/x/database/sql/driver.ts";
