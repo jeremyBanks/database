@@ -2,17 +2,19 @@
 
 import { notImplemented } from "../_common/assertions.ts";
 
+import { Mutex } from "../_common/mutex.ts";
+import { Infallible, Result } from "../_common/result.ts";
+
 import * as driver from "./driver.ts";
 
 /** Creates a database handle/connector with the given driver and path. This may
     validate the arguments (path), but will not open a connection yet. */
 export const open = async <
-  Meta extends driver.BaseMeta = driver.BaseMeta,
-  Driver extends driver.Driver<Meta> = driver.Driver<Meta>,
+  Driver extends driver.Driver = driver.Driver,
 >(
   path: string,
   driverModule: { driver: Driver },
-): Promise<Database<Meta>> => {
+): Promise<Result<Database<Driver>, ConnectorValidationError>> => {
   const driver = driverModule.driver;
   const connector = await driver.openConnector?.(path) ??
     driver.openConnectorSync?.(path) ??
@@ -29,19 +31,21 @@ export class Database<
     private driverConnector: driver.Connector<Meta>,
   ) {}
 
+  private connections = new Set<Connection<Meta, Driver>>();
+
   /** Opens a new open connection to the database. */
-  async connect() {
-    const connection = await this.driverConnector.connect?.() ??
+  async connect(): Promise<Result<Connection<Meta, Driver>, Error>> {
+    const driverConnection = await this.driverConnector.connect?.() ??
       this.driverConnector.connectSync?.() ??
       notImplemented("driver missing .connect[Sync] implementation");
 
-    return new Connection<Meta, Driver>(this.driver, connection);
-  }
+    const connection = new Connection<Meta, Driver>(
+      this.driver,
+      driverConnection,
+    );
 
-  /** Closes the connection. If there is an active transaction, this will block
-      until it is finished. */
-  async close(): Promise<void> {
-    return notImplemented();
+    this.connections.add(connection);
+    return connection;
   }
 }
 
@@ -54,11 +58,30 @@ export class Connection<
     private driverConnection: driver.Connection<Meta>,
   ) {}
 
+  /** Lock that must be held by the currently-executing child transaction. */
+  private transactionLock = new Mutex({});
+
   /** Starts a new transaction in the connection. If if there is an already an
       active transaction in progress on this connection, this will block until
       it is closed. */
   async startTransaction(): Promise<Transaction<Meta, Driver>> {
-    return notImplemented();
+    return new Promise((resolve) => {
+      this.transactionLock.use(async () => {
+        const transaction = new Transaction<Meta, Driver>();
+        resolve(transaction);
+        await transaction.closed();
+      });
+    });
+  }
+
+  /** Closes the connection. If there are currently transactions in progress,
+      this will block until they have all closed. */
+  async close(): Promise<void> {
+    await this.transactionLock.dispose();
+
+    this.driverConnection.close
+      ? (await this.driverConnection.close())
+      : this.driverConnection.closeSync?.();
   }
 }
 
@@ -69,17 +92,17 @@ export class Transaction<
   /** Prepares a SQL query for execution in this transaction. */
   async prepareStatement(
     query: string,
-  ): Promise<PreparedStatement<Meta, Driver>> {
+  ): Promise<Result<PreparedStatement<Meta, Driver>, Error>> {
     return notImplemented();
   }
 
   /** Closes the transaction with changes committed. */
-  async commit(query: string): Promise<void> {
+  async commit(): Promise<Result<void, Error>> {
     return notImplemented();
   }
 
   /** Closes the transaction with changes rolled back. */
-  async rollback(query: string): Promise<PreparedStatement<Meta, Driver>> {
+  async rollback(): Promise<PreparedStatement<Meta, Driver>> {
     return notImplemented();
   }
 

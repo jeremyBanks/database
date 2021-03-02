@@ -166,34 +166,57 @@ operations.
 - `sql.open(path, driver): Promise<sql.Database>`
   - Creates a database handle/connector with the given driver and path. May
     validate the arguments (path), but will not open a connection yet.
+    - Throws: may throw an async error if the driver argument is invalid.
 - `sql.Database` class
   - `.connect(): Promise<sql.Connection>`
     - Opens a new open connection to the database. In the future a connection
       pool will be maintained instead of always opening new connections.
+    - Throws: may throw an async error if unable to connect.
 - `sql.Connection` class
   - `.startTransaction(): Promise<sql.Transaction>`
     - Starts a new transaction in the connection. If if there is an already an
       active transaction in progress on this connection, this will block until
-      it is finished.
+      it is closed.
+    - Throws: may throw an async error if the connection fails or the database
+        responds with an error.
   - `.prepareStatement(query: string): Promise<sql.PreparedStatement>`
     - Prepares a SQL query for execution in this connection without a
       transaction.
+    - Throws: may throw an async error if the connection fails or the database
+        responds with an error.
   - `.close(): Promise<void>`
     - Closes the connection. If there is an active transaction, this will block
-      until it is finished.
+      until it is closed.
+    - Throws: never.
+  - `.closed(): Promise<void>`
+    - Blocks until the connection is closed.
+    - Throws: never.
 - `sql.Transaction` class
   - `.prepareStatement(query: string): Promise<sql.PreparedStatement>`
     - Prepares a SQL query for execution in this transaction.
+    - Throws: may throw an async error if the connection fails or the database
+        responds with an error.
   - `.commit(): Promise<void>`
-    - Completes the transaction with changes committed.
+    - Closes the transaction and any open nested transactions with changes
+      committed.
+    - Throws: may throw an async error if the connection fails or the database
+        responds with an error.
   - `.rollback(): Promise<void>`
-    - Completes the transaction with changes rolled back.
+    - Closes the transaction and any open nested transactions with changes
+      rolled back.
+    - Throws: may throw an async error if the connection fails or the database
+        responds with an error.
   - `.startTransaction(): Promise<sql.Transaction>`
     - Starts a nested transaction within this transaction. If a nested
-      transaction is already in progress, this will block until it is finished.
+      transaction is already in progress, this will block until it is closed.
       While a nested transaction is in progress, queries should be executed
       through the inner-most active transaction, not the parent transaction, or
-      else they will block until the child transaction is finished.
+      else they will block until the child transaction is closed.
+    - Throws: may throw an async error if the connection fails or the database
+        responds with an error.
+  - `.closed(): Promise<void>`
+    - Blocks until the transaction is closed.
+    - Throws: never.
 - `sql.PreparedStatement` class
   - `.query(args?: Array<BoundValue>): AsyncGenerator<Iterator<ResultValue>>`
     - Executes the query with an optional array of bound values, and

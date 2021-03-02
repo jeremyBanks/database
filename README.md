@@ -28,8 +28,15 @@ Stable releases are tagged with three-part [semver] version numbers such as
 Flexible type parameters can be valuable, but when practical they should provide
 unobtrusive defaults for users that don't need them.
 
-An underscore prefix on a module, directory, or identifier name indicates that
-it's internal and isn't intended to be imported from outside of its parent tree.
+An underscore prefix on a file or directory name indicates that it's internal
+and isn't intended to be imported from outside of its parent directory.
+
+An underscore prefix on a property name indicates that it's internal and isn't
+intended to be referenced from outside of its package. TypeScript doesn't have a
+built-in visibility modifier between `protected` and `public`, like C#'s
+`internal` or Rust's `pub(crate)`.
+
+If you think your PR's commits are a mess, consider squash-merging.
 
 When written in ALL-CAPS (in prose, not code), the terms "MUST", "MUST NOT",
 "REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY",

@@ -37,7 +37,8 @@ Deno.test("create, count, commit", async () => {
   const insertEdward = await transaction.prepareStatement(
     "INSERT INTO User (Name) VALUES ('Edward')",
   );
-  await insertEdward.exec("Edward");
+  await insertEdward.exec();
+
   await transaction2.rollback();
 
   await connection.close();
