@@ -188,7 +188,8 @@ operations.
     - Starts a nested transaction within this transaction. If a nested
       transaction is already in progress, this will block until it is finished.
       While a nested transaction is in progress, queries should be executed
-      through the inner-most active transaction, not the parent transaction.
+      through the inner-most active transaction, not the parent transaction, or
+      else they will block until the child transaction is finished.
 - `sql.PreparedStatement` class
   - `.query(args?: Array<BoundValue>): AsyncGenerator<Iterator<ResultValue>>`
     - Executes the query with an optional array of bound values, and
@@ -204,8 +205,11 @@ operations.
       may be returned, but note that for some drivers these values may reflect a
       previous query if the executed one did not actually insert or affect any
       rows. (These should only be absent if the driver is certain that they're
-      not relevant to executed query, or doesn't support them at all.)
+      not relevant to the executed query, or doesn't support them at all.)
   - `.dispose(): Promise<void>`
+    - Disposes of this object so that any associated resources can be freed.
+      Calling dispose multiple times is safe, but any other operations with the
+      object may throw an error after it has been disposed.
 
 ### Implementation Notes
 
@@ -220,6 +224,9 @@ interface even though they're not present in the driver interface yet. This is
 because they're not supported by one of the driver's we're currently working
 with (`deno-sqlite`), so we're going to just provide our shim implementation for
 now. We'll add an optional interface for supporting drivers in the future.
+
+The methods descriptions above will be copied into the code as docstrings for
+the sake of Deno Doc's generated API documentation.
 
 ## Included Driver Implementations (`x/database/x/…`)
 
