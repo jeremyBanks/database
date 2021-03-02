@@ -47,8 +47,8 @@ export class Database<
 
 export class Connection<
   Meta extends driver.BaseMeta,
-  Driver extends driver.Driver<Meta> = driver.Driver<Meta>,
-> implements driver.Connection<Meta> {
+  Driver extends driver.Driver<Meta>,
+> {
   constructor(
     private driver: Driver,
     private driverConnection: driver.Connection<Meta>,
@@ -57,14 +57,14 @@ export class Connection<
   /** Starts a new transaction in the connection. If if there is an already an
       active transaction in progress on this connection, this will block until
       it is closed. */
-  async startTransaction() {
+  async startTransaction(): Promise<Transaction<Meta, Driver>> {
     return notImplemented();
   }
 }
 
 export class Transaction<
   Meta extends driver.BaseMeta,
-  Driver extends driver.Driver<Meta> = driver.Driver<Meta>,
+  Driver extends driver.Driver<Meta>,
 > {
   /** Prepares a SQL query for execution in this transaction. */
   async prepareStatement(
@@ -95,7 +95,7 @@ export class Transaction<
 
 export class PreparedStatement<
   Meta extends driver.BaseMeta,
-  Driver extends driver.Driver<Meta> = driver.Driver<Meta>,
+  Driver extends driver.Driver<Meta>,
 > {
   /** Executes the query with an optional array of bound values, and
       incrementally reads rows from the database. The iterator should be

@@ -19,7 +19,7 @@ export type Meta = driver.Meta<{
 
 export class Driver
   implements driver.Driver<Meta>, driver.ConnectorOpener<Meta> {
-  openConnectorSync(path: string) {
+  openConnectorSync(path: string): Connector {
     return new Connector(this, path);
   }
 }
@@ -30,7 +30,7 @@ export class Connector implements driver.Connector<Meta> {
     private readonly path: string,
   ) {}
 
-  connectSync() {
+  connectSync(): Connection {
     const handle = new sqlite.DB(this.path);
     return new Connection(this.driver, handle);
   }
@@ -44,7 +44,14 @@ export class Connection implements driver.Connection<Meta> {
     private readonly handle: sqlite.DB,
   ) {}
 
-  startTransactionSync() {
+  querySync(
+    query: string,
+    args: Array<BoundValue>,
+  ): Iterable<Iterable<ResultValue>> {
+    return this.handle.query(query, args);
+  }
+
+  startTransactionSync(): Transaction {
     if (this._childTransaction !== undefined) {
       throw new Error(
         ".startTransaction() but we already have a child transaction",
@@ -64,7 +71,7 @@ export class Connection implements driver.Connection<Meta> {
     return this.handle.changes;
   }
 
-  closeSync() {
+  closeSync(): void {
     this.handle.close();
   }
 }
@@ -85,7 +92,14 @@ export class Transaction implements driver.Transaction<Meta> {
     }
   }
 
-  startTransactionSync() {
+  querySync(
+    query: string,
+    args: Array<BoundValue>,
+  ): Iterable<Iterable<ResultValue>> {
+    return this.handle.query(query, args);
+  }
+
+  startTransactionSync(): Transaction {
     if (this._childTransaction !== undefined) {
       throw new Error(
         ".startTransaction() but we already have a child transaction",

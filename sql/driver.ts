@@ -62,14 +62,16 @@ export interface Connection<Meta extends BaseMeta = BaseMeta>
   /** The number of rows affected by the last query through this connection. If
       the last query was of a type that could not affect any rows, the result of
       this method may be a stale value or undefined. */
-  affectedRows(): Promise<number | undefined>;
+  affectedRows?(): Promise<number | undefined>;
   /** The number of rows affected by the last query through this connection. If
       the last query was of a type that could not affect any rows, the result of
       this method may be a stale value or undefined. */
-  affectedRowsSync(): number | undefined;
+  affectedRowsSync?(): number | undefined;
 
   /** Close the connection. This object must not be used any more. */
-  close(): Promise<void>;
+  close?(): Promise<void>;
+  /** Close the connection. This object must not be used any more. */
+  closeSync?(): void;
 }
 
 export interface Transaction<Meta extends BaseMeta = BaseMeta>
