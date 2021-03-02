@@ -99,14 +99,14 @@ export interface TransactionStarter<Meta extends BaseMeta = BaseMeta> {
 export interface Queryer<Meta extends BaseMeta = BaseMeta> {
   /** Executes a query, returning the results as an AsyncIterable of Iterable
       rows of ResultValues. These iterables must not be used after the
-      associated transaction has ended. */
+      associated transaction, if any, has ended. */
   query?(
     query: string,
     values: Array<Meta["BoundValue"]>,
   ): AsyncIterable<Iterable<Meta["ResultValue"]>>;
   /** Executes a query, returning the results as an Iterable of Iterable
       rows of ResultValues. These iterables must not be used after the
-      associated transaction has ended. */
+      associated transaction, if any, has ended. */
   querySync?(
     query: string,
     values: Array<Meta["BoundValue"]>,

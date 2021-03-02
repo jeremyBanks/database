@@ -102,6 +102,10 @@ one or both variations of each method.
   - `.connect[Sync](): driver.Connection`
     - Returns a new connection to the database.
 - `driver.Connection` interface
+  - `.query[Sync](sql: string, arguments?: Array<BoundValue>): AsyncIterable<Iterable<BoundValue>>`
+    - Executes a query against the database without using a transaction,
+      returning the results as an `AsyncIterable` of `Iterable` rows of
+      `ResultValue`s.
   - `.startTransaction[Sync](): driver.Transaction`
     - Starts a new transaction within in the connection.
   - `.lastInsertedId[Sync](): ResultValue | undefined`

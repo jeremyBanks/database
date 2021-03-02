@@ -133,25 +133,5 @@ export class Transaction implements driver.Transaction<Meta> {
   }
 }
 
-/** A prepared statement, bound in the context of a parent transaction or connection. */
-export class PreparedStatement implements driver.PreparedStatement {
-  constructor(
-    private readonly connectionHandle: sqlite.DB,
-    private readonly sql: string,
-  ) {}
-
-  querySync(values: Array<BoundValue>) {
-    return this.connectionHandle.query(this.sql, values);
-  }
-
-  execSync(values: Array<BoundValue>): driver.ExecResult<Meta> {
-    this.connectionHandle.query(this.sql, values).return();
-    return {
-      rowsAffected: this.connectionHandle.changes,
-      lastInsertId: this.connectionHandle.lastInsertRowId,
-    };
-  }
-}
-
 const sqliteDriver = new Driver();
 export { sqliteDriver as driver };
