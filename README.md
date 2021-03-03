@@ -1,16 +1,15 @@
-# /x/database/
+# x/database
 
 https://deno.land/x/database@0.1.0
 
-**/x/database/** provides abstract TypeScript interfaces for databases in
-[Deno], inspired by Go's [**database**](https://golang.org/pkg/database/)
-package.
+**x/database** provides abstract TypeScript interfaces for databases in [Deno],
+inspired by Go's [**database**](https://golang.org/pkg/database/) package.
 
 [Deno]: https://deno.land/
 
 ## Contents
 
-- [**/x/database/sql/**](./sql/)
+- [**x/database/sql**](./sql/)
 
 ## Style
 

@@ -95,7 +95,7 @@ The exported error type hierarchy is as follows:
         - Indicates that the driver was missing an implementation of a method
           that it was required to have.
 
-## Database Driver API (`x/database/sql/driver.ts`)
+## Internal Database Driver API (`x/database/sql/driver.ts`)
 
 Inspired by [`driver.go`](https://golang.org/src/database/sql/driver/driver.go),
 `./driver.ts` exports interfaces for database driver libraries to implement for
@@ -111,8 +111,8 @@ throw errors asynchronously.
 
 Drivers should only throw errors of the specified types, assuming they are used
 correctly. (If documented invariants are violated, or objects of invalid types
-are passed in, their behaviour may be undefined. Throwing `TypeError` may be
-a good idea.)
+are passed in, their behaviour may be undefined. Throwing `TypeError` may be a
+good idea.)
 
 - `driver.Module` interface
   - `.driver: Driver`
@@ -220,7 +220,7 @@ If a driver does not define and use its own `Meta` type, a default `Meta` will
 be used which expects only the the JSON primitive types: `null`, `boolean`,
 `number` and `string`.
 
-## Database Consumer API (`x/database/sql/sql.ts`)
+## Public Database Consumer API (`x/database/sql/sql.ts`)
 
 Inspired by [`sql.go`](https://golang.org/src/database/sql/sql.go), this is
 primary interface, which most users will use. `BoundValue` and `ResultValue`
@@ -317,8 +317,8 @@ because they're not supported by one of the driver's we're currently working
 with (`deno-sqlite`), so we're going to just provide our shim implementation for
 now. We'll add an optional interface for supporting drivers in the future.
 
-The methods descriptions above will be copied into the code as docstrings for
-the sake of Deno Doc's generated API documentation.
+The methods descriptions above will included in the code as docstrings for the
+sake of Deno Doc's generated API documentation.
 
 ## Included Driver Implementations (`x/database/x/…`)
 
@@ -328,10 +328,10 @@ anything required in this repository. However, that can't happen while this is
 still under unstable development, so for now we will directly include driver
 interface implementations for a couple different database driver libraries:
 
-- `…/sqlite.ts` wrapping [`/x/sqlite/`](https://deno.land/x/sqlite), an
+- `…/sqlite.ts` wrapping [`x/sqlite/`](https://deno.land/x/sqlite), an
   [MIT-Licensed](https://github.com/dyedgreen/deno-sqlite/blob/master/LICENSE)
   synchronous in-process WASM SQLite library.
-- `…/postgres.ts` wrapping [`/x/postgres/`](https://deno.land/x/postgres), an
+- `…/postgres.ts` wrapping [`x/postgres/`](https://deno.land/x/postgres), an
   [MIT-Licensed](https://github.com/denodrivers/postgres#license) asynchronous
   PostgreSQL client library.
 
