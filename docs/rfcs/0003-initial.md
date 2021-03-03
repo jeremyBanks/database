@@ -61,6 +61,40 @@ Prior to v1.0, we do not make any guarantees about API stability
 ([as per semver](https://semver.org/spec/v2.0.0.html#spec-item-4)), but we
 should still be thoughtful and try to avoid unnecessary breakage.
 
+## Error Types (`x/database/sql/errors.ts`)
+
+`errors.ts` exports several error classes corresponding to major types of
+database-related errors. Every error thrown by `sql.ts` will be an instance of
+one of these classes (or a subclass). Driver implementations are also expected
+to only throw errors of these types (and only as indicated in `driver.ts`), but
+they're free to subclass them to add more detail.
+
+The exported error type hierarchy is as follows:
+
+- `DatabaseError`
+  - Base class for all of our error types.
+  - Extends the built-in `AggregateError`, to make it easy to capture internal
+    error objects so they're available during debugging.
+  - `DatabaseConnectorValidationError`
+    - Indicates that a database connector was created with an invalid path.
+  - `DatabaseConnectivityError`
+    - Indicates that an unrecoverable network or filesystem error interrupted
+      the database connection and caused an operation to fail.
+  - `DatabaseEngineError`
+    - Base class for all errors received from the database itself, rather than
+      produced by our logic.
+    - `DatabaseEngineConstraintError`
+      - A database driver error indicating that a constraint was violated.
+    - `DatabaseEnginePermissionError`
+      - A database driver error indicating that a permission was missing.
+  - `DatabaseDriverError`
+    - Indicates that the database driver has performed in an unexpected way.
+      This may indicate a bug or version incompatibility in the driver or this
+      library.
+      - `DatabaseDriverMissingImplementationError`
+        - Indicates that the driver was missing an implementation of a method
+          that it was required to have.
+
 ## Database Driver API (`x/database/sql/driver.ts`)
 
 Inspired by [`driver.go`](https://golang.org/src/database/sql/driver/driver.go),
@@ -72,7 +106,13 @@ themselves with this library as they do in with the Go package.
 Many of these interfaces define methods in both optional async and sync
 variants, such as `connect?(): Promise<Connection>` and
 `connectSync?(): Connection`. In these cases, drivers may choose to implement
-one or both variations of each method.
+one or both variations of each method. Async method implementations must always
+throw errors asynchronously.
+
+Drivers should only throw errors of the specified types, assuming they are used
+correctly. (If documented invariants are violated, or objects of invalid types
+are passed in, their behaviour may be undefined. Throwing `TypeError` may be
+a good idea.)
 
 - `driver.Module` interface
   - `.driver: Driver`
@@ -98,41 +138,66 @@ one or both variations of each method.
   - `.open[Sync](path: string): driver.Connector`
     - Prepares a connector object that can be used to make connections to a
       database with the given path.
+
+      May throw `DatabaseConnectorValidationError`.
 - `driver.Connector` interface
   - `.connect[Sync](): driver.Connection`
     - Returns a new connection to the database.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
 - `driver.Connection` interface
   - `.query[Sync](sql: string, arguments?: Array<BoundValue>): AsyncIterable<Iterable<BoundValue>>`
     - Executes a query against the database without using a transaction,
       returning the results as an `AsyncIterable` of `Iterable` rows of
       `ResultValue`s.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.startTransaction[Sync](): driver.Transaction`
     - Starts a new transaction within in the connection.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.lastInsertedId[Sync](): ResultValue | undefined`
     - The primary key of the last row inserted through this connection. If the
       last query did not insert a row, the result of this method may be a stale
       value or `undefined`.
+
+      May throw `DatabaseConnectivityError`.
   - `.affectedRows[Sync](): number | undefined`
     - The number of rows affected by the last query through this connection. If
       the last query was of a type that could not affect any rows, the result of
       this method may be a stale value or `undefined`.
+
+      May throw `DatabaseConnectivityError`.
   - `.close[Sync](): void`
-    - close the connection.
+    - Close the connection.
+
+      Must not throw.
+
+      Drivers may assume that no other methods on the Connection will be called
+      after close has been called, but close may be called multiple times.
 - `driver.Transaction` interface
   - `.query[Sync](sql: string, arguments?: Array<BoundValue>): AsyncIterable<Iterable<BoundValue>>`
     - Executes a query against the database in the context of this transaction,
       returning the results as an `AsyncIterable` of `Iterable` rows of
       `ResultValue`s. These iterables will not be used after the associated
       transaction has ended.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.commit[Sync](): void`
     - Ends the transaction, with any committed and saved. The transaction object
       will not be used again.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.rollback[Sync](): void`
     - Ends the transaction, with any changes rolled back. The transaction object
       will not be used again.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.startTransaction[Sync](): driver.Transaction`
     - Starts a new child transaction within this transaction. The transaction
       object will not be used again until the child transaction has ended.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
 
 ### Driver `Meta` Type Information
 
@@ -254,40 +319,6 @@ now. We'll add an optional interface for supporting drivers in the future.
 
 The methods descriptions above will be copied into the code as docstrings for
 the sake of Deno Doc's generated API documentation.
-
-## Error Types (`x/database/sql/errors.ts`)
-
-`errors.ts` exports several error classes corresponding to major types of
-database-related errors. Every error thrown by `sql.ts` will be an instance of
-one of these classes (or a subclass). Driver implementations are also expected
-to only throw errors of these types (and only as indicated in `driver.ts`), but
-they're free to subclass them to add more detail.
-
-The exported error type hierarchy is as follows:
-
-- `errors.DatabaseError`
-  - Base class for all of our error types.
-  - Extends the built-in `AggregateError`, to make it easy to capture internal
-    error objects so they're available during debugging.
-  - `errors.DatabaseConnectorValidationError`
-    - Indicates that a database connector was created with an invalid path.
-  - `errors.DatabaseConnectivityError`
-    - Indicates that an unrecoverable network or filesystem interrupted the
-      database connection and caused an operation to fail.
-  - `errors.DatabaseEngineError`
-    - Base class for all errors received from the database itself, rather than
-      produced by our logic.
-    - `errors.DatabaseEngineConstraintError`
-      - A database driver error indicating that a constraint was violated.
-    - `errors.DatabaseEnginePermissionError`
-      - A database driver error indicating that a permission was missing.
-  - `errors.DatabaseDriverError`
-    - Indicates that the database driver has performed in an unexpected way.
-      This may indicate a bug or version incompatibility in the driver or this
-      library.
-      - `errors.DatabaseDriverMissingImplementationError`
-        - Indicates that the driver was missing an implementation of a method
-          that it was required to have.
 
 ## Included Driver Implementations (`x/database/x/…`)
 
