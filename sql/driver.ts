@@ -28,13 +28,8 @@ export interface Module<Meta extends BaseMeta = BaseMeta> {
 export interface Driver<Meta extends BaseMeta = BaseMeta>
   extends ConnectorOpener<Meta> {}
 
-/** Helper type function to get the associated Meta type, or a property of it,
-    from a Driver type. */
-export type meta<
-  D extends Driver,
-  key extends string | undefined = undefined,
-> = D extends Driver<infer Meta>
-  ? (key extends string ? key extends keyof Meta ? Meta[key] : never : Meta)
+/** Helper type function to get the associated Meta type from a Driver type. */
+export type meta<D extends Driver> = D extends Driver<infer Meta> ? Meta
   : never;
 
 export interface ConnectorOpener<Meta extends BaseMeta = BaseMeta> {

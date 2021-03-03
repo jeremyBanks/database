@@ -274,17 +274,20 @@ The exported error type hierarchy is as follows:
   - `errors.DatabaseConnectivityError`
     - Indicates that an unrecoverable network or filesystem interrupted the
       database connection and caused an operation to fail.
-  - `errors.DatabaseDriverError`
+  - `errors.DatabaseEngineError`
     - Base class for all errors received from the database itself, rather than
       produced by our logic.
-    - `errors.DatabaseDriverConstraintError`
+    - `errors.DatabaseEngineConstraintError`
       - A database driver error indicating that a constraint was violated.
-    - `errors.DatabaseDriverPermissionError`
+    - `errors.DatabaseEnginePermissionError`
       - A database driver error indicating that a permission was missing.
-  - `errors.DatabaseInternalEngineError`
+  - `errors.DatabaseDriverError`
     - Indicates that the database driver has performed in an unexpected way.
       This may indicate a bug or version incompatibility in the driver or this
       library.
+      - `errors.DatabaseDriverMissingImplementationError`
+        - Indicates that the driver was missing an implementation of a method
+          that it was required to have.
 
 ## Included Driver Implementations (`x/database/x/…`)
 

@@ -10,8 +10,7 @@ import { meta } from "./driver.ts";
 import * as errors from "./errors.ts";
 
 /** Creates a database handle/connector with the given driver and path.
-    @throws {errors.ConnectorValidationError} if the path was invalid.
-    */
+    @throws {errors.ConnectorValidationError} if the path was invalid. */
 export const open = async <Driver extends driver.Driver = driver.Driver>(
   path: string,
   driverModule: { driver: Driver },
@@ -88,6 +87,11 @@ export class Connection<
 export class Transaction<
   Driver extends driver.Driver,
 > {
+  constructor(
+    private driver: Driver,
+    private driverTransaction: driver.Connection<meta<Driver>>,
+  ) {}
+
   /** Prepares a SQL query for execution in this transaction. */
   async prepareStatement(
     query: string,
@@ -96,7 +100,9 @@ export class Transaction<
   }
 
   async closed(): Promise<void> {
-    await this.driverTransaction.closed();
+    this.driverTransaction.closed
+      ? await this.driverTransaction.closed()
+      : this.driverTransaction.closeSync?.();
   }
 
   /** Closes the transaction with changes committed. */
@@ -127,16 +133,16 @@ export class PreparedStatement<
       disposed of by calling .return() (which a for await statement will do
       automatically). */
   async *query(
-    args?: Array<meta<Driver, "BoundValue">>,
-  ): AsyncGenerator<Iterator<meta<Driver, "ResultValue">>> {
+    args?: Array<meta<Driver>["BoundValue"]>,
+  ): AsyncGenerator<Iterator<meta<Driver>["ResultValue"]>> {
     return notImplemented();
   }
 
   /** Executes the query with an optional array of bound values, returning only
       the first row of results, as an array. */
   async queryRow(
-    args?: Array<meta<Driver, "BoundValue">>,
-  ): Promise<Array<meta<Driver, "ResultValue">>> {
+    args?: Array<meta<Driver>["BoundValue"]>,
+  ): Promise<Array<meta<Driver>["ResultValue"]>> {
     return notImplemented();
   }
 
@@ -147,9 +153,9 @@ export class PreparedStatement<
       rows. (These should only be absent if the driver is certain that they're
       not relevant to the executed query, or doesn't support them at all.) */
   async exec(
-    args?: Array<meta<Driver, "BoundValue">>,
+    args?: Array<meta<Driver>["BoundValue"]>,
   ): Promise<{
-    insertedRowId?: meta<Driver, "ResultValue">;
+    insertedRowId?: meta<Driver>["ResultValue"];
     affectedRowCount?: number;
   }> {
     return notImplemented();
