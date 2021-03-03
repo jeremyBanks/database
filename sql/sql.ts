@@ -6,6 +6,7 @@ import { Mutex } from "../_common/mutex.ts";
 import { Infallible, Result } from "../_common/result.ts";
 
 import * as driver from "./driver.ts";
+import { meta } from "./driver.ts";
 import * as errors from "./errors.ts";
 
 /** Creates a database handle/connector with the given driver and path.
@@ -25,7 +26,7 @@ export const open = async <Driver extends driver.Driver = driver.Driver>(
 export class Database<Driver extends driver.Driver = driver.Driver> {
   constructor(
     private driver: Driver,
-    private driverConnector: driver.Connector<Driver>,
+    private driverConnector: driver.Connector<meta<Driver>>,
   ) {}
 
   private connections = new Set<Connection<Driver>>();
@@ -34,12 +35,12 @@ export class Database<Driver extends driver.Driver = driver.Driver> {
 
       @throws {errors.NetworkError}
   */
-  async connect(): Promise<Result<Connection<Meta, Driver>, Error>> {
+  async connect(): Promise<Result<Connection<Driver>, Error>> {
     const driverConnection = await this.driverConnector.connect?.() ??
       this.driverConnector.connectSync?.() ??
       notImplemented("driver missing .connect[Sync] implementation");
 
-    const connection = new Connection<Meta, Driver>(
+    const connection = new Connection<Driver>(
       this.driver,
       driverConnection,
     );
@@ -50,11 +51,11 @@ export class Database<Driver extends driver.Driver = driver.Driver> {
 }
 
 export class Connection<
-  Driver extends driver.Driver<Meta>,
+  Driver extends driver.Driver,
 > {
   constructor(
     private driver: Driver,
-    private driverConnection: driver.Connection<Meta>,
+    private driverConnection: driver.Connection<meta<Driver>>,
   ) {}
 
   /** Lock that must be held by the currently-executing child transaction. */
@@ -63,10 +64,10 @@ export class Connection<
   /** Starts a new transaction in the connection. If if there is an already an
       active transaction in progress on this connection, this will block until
       it is closed. */
-  async startTransaction(): Promise<Transaction<Meta, Driver>> {
+  async startTransaction(): Promise<Transaction<Driver>> {
     return new Promise((resolve) => {
       this.transactionLock.use(async () => {
-        const transaction = new Transaction<Meta, Driver>();
+        const transaction = new Transaction<Driver>();
         resolve(transaction);
         await transaction.closed();
       });
@@ -85,13 +86,17 @@ export class Connection<
 }
 
 export class Transaction<
-  Driver extends driver.Driver<Meta>,
+  Driver extends driver.Driver,
 > {
   /** Prepares a SQL query for execution in this transaction. */
   async prepareStatement(
     query: string,
-  ): Promise<Result<PreparedStatement<Meta, Driver>, Error>> {
+  ): Promise<Result<PreparedStatement<Driver>, Error>> {
     return notImplemented();
+  }
+
+  async closed(): Promise<void> {
+    await this.driverTransaction.closed();
   }
 
   /** Closes the transaction with changes committed. */
@@ -100,7 +105,7 @@ export class Transaction<
   }
 
   /** Closes the transaction with changes rolled back. */
-  async rollback(): Promise<PreparedStatement<Meta, Driver>> {
+  async rollback(): Promise<PreparedStatement<Driver>> {
     return notImplemented();
   }
 
@@ -109,29 +114,29 @@ export class Transaction<
       While a nested transaction is in progress, queries should be executed
       through the inner-most active transaction, not the parent transaction, or
       else they will block until the child transaction is closed. */
-  startTransaction(): Transaction<Meta, Driver> {
+  startTransaction(): Transaction<Driver> {
     return notImplemented();
   }
 }
 
 export class PreparedStatement<
-  Driver extends driver.Driver<Meta>,
+  Driver extends driver.Driver,
 > {
   /** Executes the query with an optional array of bound values, and
       incrementally reads rows from the database. The iterator should be
       disposed of by calling .return() (which a for await statement will do
       automatically). */
   async *query(
-    args?: Array<Meta["BoundValue"]>,
-  ): AsyncGenerator<Iterator<Meta["ResultValue"]>> {
+    args?: Array<meta<Driver, "BoundValue">>,
+  ): AsyncGenerator<Iterator<meta<Driver, "ResultValue">>> {
     return notImplemented();
   }
 
   /** Executes the query with an optional array of bound values, returning only
       the first row of results, as an array. */
   async queryRow(
-    args?: Array<Meta["BoundValue"]>,
-  ): Promise<Array<Meta["ResultValue"]>> {
+    args?: Array<meta<Driver, "BoundValue">>,
+  ): Promise<Array<meta<Driver, "ResultValue">>> {
     return notImplemented();
   }
 
@@ -142,9 +147,9 @@ export class PreparedStatement<
       rows. (These should only be absent if the driver is certain that they're
       not relevant to the executed query, or doesn't support them at all.) */
   async exec(
-    args?: Array<Meta["BoundValue"]>,
+    args?: Array<meta<Driver, "BoundValue">>,
   ): Promise<{
-    insertedRowId?: Meta["ResultValue"];
+    insertedRowId?: meta<Driver, "ResultValue">;
     affectedRowCount?: number;
   }> {
     return notImplemented();

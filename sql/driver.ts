@@ -28,8 +28,13 @@ export interface Module<Meta extends BaseMeta = BaseMeta> {
 export interface Driver<Meta extends BaseMeta = BaseMeta>
   extends ConnectorOpener<Meta> {}
 
-/** Helper type function to get the associated Meta type from a Driver type. */
-export type GetMeta<D extends Driver> = D extends Driver<infer Meta> ? Meta
+/** Helper type function to get the associated Meta type, or a property of it,
+    from a Driver type. */
+export type meta<
+  D extends Driver,
+  key extends string | undefined = undefined,
+> = D extends Driver<infer Meta>
+  ? (key extends string ? key extends keyof Meta ? Meta[key] : never : Meta)
   : never;
 
 export interface ConnectorOpener<Meta extends BaseMeta = BaseMeta> {
@@ -76,6 +81,11 @@ export interface Connection<Meta extends BaseMeta = BaseMeta>
   close?(): Promise<void>;
   /** Close the connection. This object must not be used any more. */
   closeSync?(): void;
+
+  /** Blocks until the connection is closed. */
+  closed?(): Promise<void>;
+  /** Blocks until the connection is closed. */
+  closedSync?(): void;
 }
 
 export interface Transaction<Meta extends BaseMeta = BaseMeta>
@@ -93,6 +103,11 @@ export interface Transaction<Meta extends BaseMeta = BaseMeta>
   /** Closes the transaction, with any changes committed and saved. This object
       must not be used any more. */
   commitSync?(): undefined;
+
+  /** Blocks until the transaction is closed. */
+  closed?(): Promise<void>;
+  /** Blocks until the transaction is closed. */
+  closedSync?(): void;
 }
 
 export interface TransactionStarter<Meta extends BaseMeta = BaseMeta> {
