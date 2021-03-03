@@ -12,7 +12,7 @@ interface MetaDefaults extends BaseMeta {
   ResultValue: null | boolean | number | string;
 }
 
-/** Type "keyword function" to define a driver Meta type. */
+/** Helper type function to define a driver Meta type. */
 export type Meta<Opts extends Partial<BaseMeta>> = {
   [Key in keyof BaseMeta]: undefined extends Opts[Key] ? MetaDefaults[Key]
     : Opts[Key];
@@ -27,6 +27,10 @@ export interface Module<Meta extends BaseMeta = BaseMeta> {
 
 export interface Driver<Meta extends BaseMeta = BaseMeta>
   extends ConnectorOpener<Meta> {}
+
+/** Helper type function to get the associated Meta type from a Driver type. */
+export type GetMeta<D extends Driver> = D extends Driver<infer Meta> ? Meta
+  : never;
 
 export interface ConnectorOpener<Meta extends BaseMeta = BaseMeta> {
   /** Prepares a connector object that can be used to make connections to a

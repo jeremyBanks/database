@@ -6,34 +6,34 @@ import { Mutex } from "../_common/mutex.ts";
 import { Infallible, Result } from "../_common/result.ts";
 
 import * as driver from "./driver.ts";
+import * as errors from "./errors.ts";
 
-/** Creates a database handle/connector with the given driver and path. This may
-    validate the arguments (path), but will not open a connection yet. */
-export const open = async <
-  Driver extends driver.Driver = driver.Driver,
->(
+/** Creates a database handle/connector with the given driver and path.
+    @throws {errors.ConnectorValidationError} if the path was invalid.
+    */
+export const open = async <Driver extends driver.Driver = driver.Driver>(
   path: string,
   driverModule: { driver: Driver },
-): Promise<Result<Database<Driver>, ConnectorValidationError>> => {
+): Promise<Database<Driver>> => {
   const driver = driverModule.driver;
   const connector = await driver.openConnector?.(path) ??
     driver.openConnectorSync?.(path) ??
     notImplemented("driver missing .open[Sync] implementation");
-  return new Database<Meta, Driver>(driver, connector);
+  return new Database<Driver>(driver, connector);
 };
 
-export class Database<
-  Meta extends driver.BaseMeta,
-  Driver extends driver.Driver<Meta> = driver.Driver<Meta>,
-> {
+export class Database<Driver extends driver.Driver = driver.Driver> {
   constructor(
     private driver: Driver,
-    private driverConnector: driver.Connector<Meta>,
+    private driverConnector: driver.Connector<Driver>,
   ) {}
 
-  private connections = new Set<Connection<Meta, Driver>>();
+  private connections = new Set<Connection<Driver>>();
 
-  /** Opens a new open connection to the database. */
+  /** Opens a new open connection to the database.
+
+      @throws {errors.NetworkError}
+  */
   async connect(): Promise<Result<Connection<Meta, Driver>, Error>> {
     const driverConnection = await this.driverConnector.connect?.() ??
       this.driverConnector.connectSync?.() ??
@@ -50,7 +50,6 @@ export class Database<
 }
 
 export class Connection<
-  Meta extends driver.BaseMeta,
   Driver extends driver.Driver<Meta>,
 > {
   constructor(
@@ -86,7 +85,6 @@ export class Connection<
 }
 
 export class Transaction<
-  Meta extends driver.BaseMeta,
   Driver extends driver.Driver<Meta>,
 > {
   /** Prepares a SQL query for execution in this transaction. */
@@ -117,7 +115,6 @@ export class Transaction<
 }
 
 export class PreparedStatement<
-  Meta extends driver.BaseMeta,
   Driver extends driver.Driver<Meta>,
 > {
   /** Executes the query with an optional array of bound values, and
