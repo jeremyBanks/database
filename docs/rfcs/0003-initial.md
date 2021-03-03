@@ -178,12 +178,12 @@ operations.
       active transaction in progress on this connection, this will block until
       it is closed.
     - Throws: may throw an async error if the connection fails or the database
-        responds with an error.
+      responds with an error.
   - `.prepareStatement(query: string): Promise<sql.PreparedStatement>`
     - Prepares a SQL query for execution in this connection without a
       transaction.
     - Throws: may throw an async error if the connection fails or the database
-        responds with an error.
+      responds with an error.
   - `.close(): Promise<void>`
     - Closes the connection. If there is an active transaction, this will block
       until it is closed.
@@ -195,17 +195,17 @@ operations.
   - `.prepareStatement(query: string): Promise<sql.PreparedStatement>`
     - Prepares a SQL query for execution in this transaction.
     - Throws: may throw an async error if the connection fails or the database
-        responds with an error.
+      responds with an error.
   - `.commit(): Promise<void>`
     - Closes the transaction and any open nested transactions with changes
       committed.
     - Throws: may throw an async error if the connection fails or the database
-        responds with an error.
+      responds with an error.
   - `.rollback(): Promise<void>`
     - Closes the transaction and any open nested transactions with changes
       rolled back.
     - Throws: may throw an async error if the connection fails or the database
-        responds with an error.
+      responds with an error.
   - `.startTransaction(): Promise<sql.Transaction>`
     - Starts a nested transaction within this transaction. If a nested
       transaction is already in progress, this will block until it is closed.
@@ -213,7 +213,7 @@ operations.
       through the inner-most active transaction, not the parent transaction, or
       else they will block until the child transaction is closed.
     - Throws: may throw an async error if the connection fails or the database
-        responds with an error.
+      responds with an error.
   - `.closed(): Promise<void>`
     - Blocks until the transaction is closed.
     - Throws: never.
@@ -254,6 +254,37 @@ now. We'll add an optional interface for supporting drivers in the future.
 
 The methods descriptions above will be copied into the code as docstrings for
 the sake of Deno Doc's generated API documentation.
+
+## Error Types (`x/database/sql/errors.ts`)
+
+`errors.ts` exports several error classes corresponding to major types of
+database-related errors. Every error thrown by `sql.ts` will be an instance of
+one of these classes (or a subclass). Driver implementations are also expected
+to only throw errors of these types (and only as indicated in `driver.ts`), but
+they're free to subclass them to add more detail.
+
+The exported error type hierarchy is as follows:
+
+- `errors.DatabaseError`
+  - Base class for all of our error types.
+  - Extends the built-in `AggregateError`, to make it easy to capture internal
+    error objects so they're available during debugging.
+  - `errors.DatabaseConnectorValidationError`
+    - Indicates that a database connector was created with an invalid path.
+  - `errors.DatabaseConnectivityError`
+    - Indicates that an unrecoverable network or filesystem interrupted the
+      database connection and caused an operation to fail.
+  - `errors.DatabaseDriverError`
+    - Base class for all errors received from the database itself, rather than
+      produced by our logic.
+    - `errors.DatabaseDriverConstraintError`
+      - A database driver error indicating that a constraint was violated.
+    - `errors.DatabaseDriverPermissionError`
+      - A database driver error indicating that a permission was missing.
+  - `errors.DatabaseInternalEngineError`
+    - Indicates that the database driver has performed in an unexpected way.
+      This may indicate a bug or version incompatibility in the driver or this
+      library.
 
 ## Included Driver Implementations (`x/database/x/…`)
 

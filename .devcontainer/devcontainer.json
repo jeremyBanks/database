@@ -17,19 +17,19 @@
     },
     "editor.codeLens": true,
     "[javascript]": {
-      "editor.defaultFormatter": "denoland.vscode-deno",
+      "editor.defaultFormatter": "denoland.vscode-deno"
     },
     "[typescript]": {
-      "editor.defaultFormatter": "denoland.vscode-deno",
+      "editor.defaultFormatter": "denoland.vscode-deno"
     },
     "[markdown]": {
-      "editor.defaultFormatter": "denoland.vscode-deno",
+      "editor.defaultFormatter": "denoland.vscode-deno"
     },
     "[javascriptreact]": {
-      "editor.defaultFormatter": "denoland.vscode-deno",
+      "editor.defaultFormatter": "denoland.vscode-deno"
     },
     "[typescriptreact]": {
-      "editor.defaultFormatter": "denoland.vscode-deno",
+      "editor.defaultFormatter": "denoland.vscode-deno"
     },
     "editor.tokenColorCustomizations": {
       "textMateRules": [
@@ -38,7 +38,7 @@
           "settings": {
             "foreground": "#0A44",
             "fontStyle": "bold"
-          },
+          }
         },
         {
           "scope": "comment",
@@ -52,20 +52,20 @@
           {
             "scope": "comment",
             "settings": {
-              "foreground": "#FFF",
+              "foreground": "#FFF"
             }
-          },
-        ],
+          }
+        ]
       },
       "[Atom One Light]": {
         "textMateRules": [
           {
             "scope": "comment",
             "settings": {
-              "foreground": "#000",
+              "foreground": "#000"
             }
-          },
-        ],
+          }
+        ]
       }
     },
     "editor.tabSize": 2,
@@ -84,7 +84,7 @@
     "files.exclude": {
       ".devcontainer": true,
       ".github": true,
-      ".vscode": true,
+      ".vscode": true
     },
     "files.insertFinalNewline": true,
     "git.autofetch": true,
