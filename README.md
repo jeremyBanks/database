@@ -1,5 +1,7 @@
 # x/database
 
+<img src="./icon.png" height="64" align="right">
+
 https://deno.land/x/database@0.1.0
 
 **x/database** provides abstract TypeScript interfaces for databases in [Deno],
@@ -53,6 +55,10 @@ Some parts of this package are inspired by Go packages that are copyright The Go
 Authors and released under [Go's BSD-style License].
 
 [Go's BSD-style License]: https://golang.org/LICENSE
+
+[The project icon](./icon.png) is copyright
+[Illufinch Art](https://www.illufinch.com/) and licensed only for use by this
+project.
 
 ### Contribution
 
