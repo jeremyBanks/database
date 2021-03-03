@@ -37,11 +37,6 @@ built-in visibility modifier between `protected` and `public`, like C#'s
 
 If you think your PR's commits are a mess, consider squash-merging.
 
-When written in ALL-CAPS (in prose, not code), the terms "MUST", "MUST NOT",
-"REQUIRED", "SHALL", "SHALL NOT", "SHOULD", "SHOULD NOT", "RECOMMENDED", "MAY",
-and "OPTIONAL" in this project are to be interpreted as described in
-[IETF RFC 2119](https://tools.ietf.org/html/RFC2119).
-
 ## License
 
 Copyright Jeremy Banks and [contributors]. Released under the [MIT License].

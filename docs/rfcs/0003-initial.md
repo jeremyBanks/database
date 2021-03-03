@@ -142,7 +142,7 @@ good idea.)
       May throw `DatabaseConnectorValidationError`.
 - `driver.Connector` interface
   - `.connect[Sync](): driver.Connection`
-    - Returns a new connection to the database.
+    - Returns an open connection to the database.
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
 - `driver.Connection` interface
@@ -169,42 +169,52 @@ good idea.)
 
       May throw `DatabaseConnectivityError`.
   - `.close[Sync](): void`
-    - Close the connection.
+    - Close the connection, blocking until it is closed.
 
       Must not throw.
 
       Drivers may assume that no other methods on the Connection will be called
-      after close has been called, but close may be called multiple times.
+      after `close` has been called, but `close` may be called multiple times.
 - `driver.Transaction` interface
   - `.query[Sync](sql: string, arguments?: Array<BoundValue>): AsyncIterable<Iterable<BoundValue>>`
     - Executes a query against the database in the context of this transaction,
       returning the results as an `AsyncIterable` of `Iterable` rows of
-      `ResultValue`s. These iterables will not be used after the associated
-      transaction has ended.
+      `ResultValue`s.
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
+
+      Drivers may assume that these iterables will not be consumed after the
+      associated Transaction or Connection has closed.
   - `.commit[Sync](): void`
-    - Ends the transaction, with any committed and saved. The transaction object
-      will not be used again.
+    - Closes the transaction and any child transactions, with any changes
+      committed and saved.
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
+
+      Drivers may assume that no methods on the Transaction will be called after
+      `commit` has been called.
   - `.rollback[Sync](): void`
-    - Ends the transaction, with any changes rolled back. The transaction object
-      will not be used again.
+    - Closes the transaction and any child transactions, with any changes rolled
+      back.
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
+
+      Drivers may assume that no methods on the Transaction will be called after
+      `rollback` has been called.
   - `.startTransaction[Sync](): driver.Transaction`
-    - Starts a new child transaction within this transaction. The transaction
-      object will not be used again until the child transaction has ended.
+    - Starts a new child transaction within this transaction.
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
+
+      Drivers may assume no methods will be called on this transaction while it
+      has an open child transaction, except for `rollback` and `commit`.
 
 ### Driver `Meta` Type Information
 
-A driver SHOULD declare an associated `Meta` type using the `driver.Meta<{...}>`
+A driver should declare an associated `Meta` type using the `driver.Meta<{...}>`
 type function. This is currently used only to specify the types used by the
-driver for bound and result column values. The `Meta` type SHOULD be provided as
-the (optional) first type argument to every interface that is implemented from
+driver for bound and result column values. The `Meta` type should be provided as
+the first type argument to every interface that is implemented from
 `driver.sql`.
 
 ```ts
