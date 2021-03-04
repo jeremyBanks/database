@@ -425,3 +425,11 @@ I would like to have what Sequelize calls a
 ["managed transactions" interface](https://sequelize.org/master/manual/transactions.html#managed-transactions),
 where an async callback function's settlement result (returning or throwing) is
 used to implicitly commit or rollback a transaction.
+
+### Column Metadata and Record Results
+
+Driver result objects should be able to expose column metadata, such as the row
+names and possibly types. These should be used to provide a method like
+`queryRecord` that returns result rows as a `Record<string, ResultValue>` using
+the result column names, instead of an `Array<ResultValue>`. Richer type mapping
+may also be explored later.
