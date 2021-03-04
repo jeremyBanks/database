@@ -64,17 +64,14 @@ should still be thoughtful and try to avoid unnecessary breakage.
 ## Error Types (`x/database/sql/errors.ts`)
 
 `errors.ts` exports several error classes corresponding to major types of
-database-related errors. Every error thrown by `sql.ts` will be an instance of
-one of these classes (or a subclass). Driver implementations are also expected
-to only throw errors of these types (and only as indicated in `driver.ts`), but
-they're free to subclass them to add more detail.
-
-The exported error type hierarchy is as follows:
+database-related errors. Driver implementations are typically expected to only
+throw errors of these types as documented, but they're free to use subclasses to
+add more detail or behaviour. The exported error type hierarchy is as follows:
 
 - `DatabaseError`
-  - Base class for all of our error types.
-  - Extends the built-in `AggregateError`, to make it easy to capture internal
-    error objects so they're available during debugging.
+  - Extends the built-in `AggregateError` to make it easy to capture internal
+    error objects to aid debugging.
+  - Base class for all of our typically-expected errors.
   - `DatabaseConnectorValidationError`
     - Indicates that a database connector was created with an invalid path.
   - `DatabaseConnectivityError`
@@ -87,13 +84,23 @@ The exported error type hierarchy is as follows:
       - A database driver error indicating that a constraint was violated.
     - `DatabaseEnginePermissionError`
       - A database driver error indicating that a permission was missing.
-  - `DatabaseDriverError`
-    - Indicates that the database driver has performed in an unexpected way.
-      This may indicate a bug or version incompatibility in the driver or this
-      library.
-      - `DatabaseDriverMissingImplementationError`
-        - Indicates that the driver was missing an implementation of a method
-          that it was required to have.
+
+- `DriverTypeError`
+  - Extends the built-in `TypeError`, representing the violation of static
+    expectations/invariants.
+  - Indicates that the database driver has performed in an unexpected way. This
+    may indicate a bug or version incompatibility in the driver or this library.
+  - `MissingImplementationDriverTypeError`
+    - Indicates that the driver was missing an implementation of a method that
+      it was required to have.
+
+In typical circumstances, the methods described below should only throw
+instances of `DatabaseError` types as individually documented. However, any
+method may throw `TypeError` if its interface requirements are violated, such as
+passing it the wrong types, or attempting to use a disposed resource like a
+closed connection. This library may also may throw a `DatabaseDriverError` if a
+driver performs in an unexpected way, in violation of its interface
+requirements.
 
 ## Internal Database Driver API (`x/database/sql/driver.ts`)
 
@@ -241,66 +248,77 @@ operations.
 - `sql.open(path, driver): Promise<sql.Database>`
   - Creates a database handle/connector with the given driver and path. May
     validate the arguments (path), but will not open a connection yet.
-    - Throws: may throw an async error if the driver argument is invalid.
+
+    May throw `DatabaseConnectorValidationError` if the path is invalid.
 - `sql.Database` class
   - `.connect(): Promise<sql.Connection>`
     - Opens a new open connection to the database. In the future a connection
       pool will be maintained instead of always opening new connections.
-    - Throws: may throw an async error if unable to connect.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
 - `sql.Connection` class
   - `.startTransaction(): Promise<sql.Transaction>`
     - Starts a new transaction in the connection. If if there is an already an
       active transaction in progress on this connection, this will block until
       it is closed.
-    - Throws: may throw an async error if the connection fails or the database
-      responds with an error.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.prepareStatement(query: string): Promise<sql.PreparedStatement>`
     - Prepares a SQL query for execution in this connection without a
       transaction.
-    - Throws: may throw an async error if the connection fails or the database
-      responds with an error.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.close(): Promise<void>`
     - Closes the connection. If there is an active transaction, this will block
       until it is closed.
-    - Throws: never.
+
+      Will not throw.
   - `.closed(): Promise<void>`
     - Blocks until the connection is closed.
-    - Throws: never.
+
+      Will not throw.
 - `sql.Transaction` class
   - `.prepareStatement(query: string): Promise<sql.PreparedStatement>`
     - Prepares a SQL query for execution in this transaction.
-    - Throws: may throw an async error if the connection fails or the database
-      responds with an error.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.commit(): Promise<void>`
     - Closes the transaction and any open nested transactions with changes
       committed.
-    - Throws: may throw an async error if the connection fails or the database
-      responds with an error.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.rollback(): Promise<void>`
     - Closes the transaction and any open nested transactions with changes
       rolled back.
-    - Throws: may throw an async error if the connection fails or the database
-      responds with an error.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.startTransaction(): Promise<sql.Transaction>`
     - Starts a nested transaction within this transaction. If a nested
       transaction is already in progress, this will block until it is closed.
       While a nested transaction is in progress, queries should be executed
       through the inner-most active transaction, not the parent transaction, or
       else they will block until the child transaction is closed.
-    - Throws: may throw an async error if the connection fails or the database
-      responds with an error.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.closed(): Promise<void>`
     - Blocks until the transaction is closed.
-    - Throws: never.
+
+      Will not throw.
 - `sql.PreparedStatement` class
   - `.query(args?: Array<BoundValue>): AsyncGenerator<Iterator<ResultValue>>`
     - Executes the query with an optional array of bound values, and
       incrementally reads rows from the database. The iterator should be
       disposed of by calling `.return()` (which a `for await` statement will do
       automatically).
+
+      Will throw `TypeError` if the generators are consumed
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.queryRow(args?: Array<BoundValue>: Promise<Array<ResultValue>>`
     - Executes the query with an optional array of bound values, returning only
       the first row of results, as an array.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.exec(args?: Array<BoundValue>: Promise<{ insertedRowId?: ResultValue, affectedRowCount?: number }>`
     - Executes the query with an optional array of bound values, without
       returning any result rows. A `insertedRowId` and `affectedRowCount` value
@@ -308,10 +326,15 @@ operations.
       previous query if the executed one did not actually insert or affect any
       rows. (These should only be absent if the driver is certain that they're
       not relevant to the executed query, or doesn't support them at all.)
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.dispose(): Promise<void>`
     - Disposes of this object so that any associated resources can be freed.
-      Calling dispose multiple times is safe, but any other operations with the
-      object may throw an error after it has been disposed.
+
+      Calling `dispose` multiple times is safe, but calling any other method
+      after calling `dispose` will cause a `TypeError`.
+
+      Will not throw.
 
 ### Implementation Notes
 
