@@ -70,25 +70,25 @@ export interface Connection<Meta extends MetaBase = MetaBase>
   lastInsertedId?(): Promise<Meta["ResultValue"] | undefined>;
   /** The primary key of the last row inserted through this connection. If the
       last query did not insert a row, the result of this method may be a stale
-      value or `undefined`. 
+      value or `undefined`.
 
       May throw `DatabaseConnectivityError`. */
   lastInsertedIdSync?(): Meta["ResultValue"] | undefined;
 
   /** The number of rows affected by the last query through this connection. If
       the last query was of a type that could not affect any rows, the result of
-      this method may be a stale value or undefined. 
+      this method may be a stale value or undefined.
 
       May throw `DatabaseConnectivityError`. */
   affectedRows?(): Promise<number | undefined>;
   /** The number of rows affected by the last query through this connection. If
       the last query was of a type that could not affect any rows, the result of
-      this method may be a stale value or undefined. 
+      this method may be a stale value or undefined.
 
       May throw `DatabaseConnectivityError`. */
   affectedRowsSync?(): number | undefined;
 
-  /** Close the connection, blocking until it is closed.
+  /** Close the connection, waiting until it is closed.
 
       Must not throw.
 
@@ -103,10 +103,10 @@ export interface Connection<Meta extends MetaBase = MetaBase>
       after close has been called, but close may be called multiple times. */
   closeSync?(): void;
 
-  /** Blocks until the connection is closed.
+  /** Waits until the connection is closed.
       Must not throw. */
   closed?(): Promise<void>;
-  /** Blocks until the connection is closed.
+  /** Waits until the connection is closed.
       Must not throw. */
   closedSync?(): void;
 }

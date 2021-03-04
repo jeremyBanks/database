@@ -1,46 +1,28 @@
-// Error types that may be used both internally and externally.
+/** Base class for all of our typically-expected errors. */
+export class DatabaseError extends AggregateError {}
 
-/** DatabaseErrors are AggregateErrors that may contain underlying driver
-    errors with more details. */
-export class DatabaseError extends AggregateError {
-  name: Brand = brand("DatabaseError");
-}
+/** Indicates that a database connector was created with an invalid path. */
+export class DatabaseConnectorValidationError extends DatabaseError {}
 
-/** Indicates that the database driver has performed in an unexpected way.
-    This may indicate a bug or incompatibility in the driver or this library. */
-export class InternalDriverError extends DatabaseError {
-  name = brand("InternalDriverError");
-}
+/** Indicates that an unrecoverable network or filesystem error interrupted the
+    database connection and caused an operation to fail. */
+export class DatabaseConnectivityError extends DatabaseError {}
 
-/** Indicates invalid connection parameters passed to the connector. */
-export class ConnectorValidationError extends DatabaseError {
-  name = brand("ConnectorValidationError");
-}
+/** Base class for all errors received from the database itself, rather than
+    produced by our logic. */
+export class DatabaseEngineError extends DatabaseError {}
 
-/** Indicates an error connecting to the database, such as a network timeout. */
-export class ConnectionError extends DatabaseError {
-  name = brand("ConnectionError");
-}
+/** A database driver error indicating that a constraint was violated. */
+export class DatabaseEngineConstraintError extends DatabaseEngineError {}
 
-/** An recognized error response coming from the database itself. */
-export class EngineError extends DatabaseError {
-  name: Brand<`${string}EngineError`> = brand("EngineError");
-}
+/** A database driver error indicating that a permission was missing. */
+export class DatabaseEnginePermissionError extends DatabaseEngineError {}
 
-/** A permission-related error coming from the database itself. */
-export class PermissionEngineError extends EngineError {
-  name = brand("PermissionEngineError");
-}
+/** Indicates that the database driver has performed in an unexpected way. This
+    may indicate a bug or version incompatibility in the driver or this library.
+    */
+export class DriverTypeError extends TypeError {}
 
-/** A constraint/integrity-related error coming from the database itself. */
-export class ConstraintEngineError extends EngineError {
-  name = brand("ConstraintEngineError");
-}
-
-// Used to brand each class as a unique nominal type to ensure they're
-// distinguished by TypeScript.
-const Brand = Symbol("Brand");
-type Brand<Name extends string = string> = string & {
-  [Brand]?: Name;
-};
-const brand = <Name extends string>(name: Name): Brand<Name> => name;
+/** Indicates that the database driver was missing an implementation of a method
+   that it was required to have. */
+export class MissingImplementationDriverTypeError extends DriverTypeError {}

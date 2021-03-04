@@ -187,7 +187,7 @@ good idea.)
 
       May throw `DatabaseConnectivityError`.
   - `.close[Sync](): void`
-    - Close the connection, blocking until it is closed.
+    - Close the connection, waiting until it is closed.
 
       Must not throw.
 
@@ -263,15 +263,14 @@ for now, even if the underlying driver supports sync operations.
     May throw `DatabaseConnectorValidationError` if the path is invalid.
 - `sql.Database` class
   - `.connect(): Promise<sql.Connection>`
-    - Opens a new open connection to the database. In the future a connection
-      pool will be maintained instead of always opening new connections.
+    - Opens a new open connection to the database.
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
 - `sql.Connection` class
   - `.startTransaction(): Promise<sql.Transaction>`
     - Starts a new transaction in the connection. If if there is an already an
-      active transaction in progress on this connection, this will block until
-      it is closed.
+      active transaction in progress on this connection, this will wait until it
+      is closed.
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.prepareStatement(query: string): Promise<sql.PreparedStatement>`
@@ -280,14 +279,14 @@ for now, even if the underlying driver supports sync operations.
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.close(): Promise<void>`
-    - Closes the connection. If there is an active transaction, this will block
+    - Closes the connection. If there is an active transaction, this will wait
       until it is closed.
 
-      Will not throw.
+      Will not typically throw.
   - `.closed(): Promise<void>`
-    - Blocks until the connection is closed.
+    - Waits until the connection is closed.
 
-      Will not throw.
+      Will not typically throw.
 - `sql.Transaction` class
   - `.prepareStatement(query: string): Promise<sql.PreparedStatement>`
     - Prepares a SQL query for execution in this transaction.
@@ -305,16 +304,16 @@ for now, even if the underlying driver supports sync operations.
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.startTransaction(): Promise<sql.Transaction>`
     - Starts a nested transaction within this transaction. If a nested
-      transaction is already in progress, this will block until it is closed.
+      transaction is already in progress, this will wait until it is closed.
       While a nested transaction is in progress, queries should be executed
       through the inner-most active transaction, not the parent transaction, or
-      else they will block until the child transaction is closed.
+      else they will wait until the child transaction is closed.
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.closed(): Promise<void>`
-    - Blocks until the transaction is closed.
+    - Waits until the transaction is closed.
 
-      Will not throw.
+      Will not typically throw.
 - `sql.PreparedStatement` class
   - `.query(args?: Array<BoundValue>): AsyncGenerator<Iterator<ResultValue>>`
     - Executes the query with an optional array of bound values, and
@@ -322,7 +321,8 @@ for now, even if the underlying driver supports sync operations.
       disposed of by calling `.return()` (which a `for await` statement will do
       automatically).
 
-      Will throw `TypeError` if the generators are consumed
+      Will throw `TypeError` if the generators are consumed after the associated
+      transaction or connection is closed.
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.queryRow(args?: Array<BoundValue>: Promise<Array<ResultValue>>`
@@ -342,10 +342,10 @@ for now, even if the underlying driver supports sync operations.
   - `.dispose(): Promise<void>`
     - Disposes of this object so that any associated resources can be freed.
 
-      Calling `dispose` multiple times is safe, but calling any other method
+      Calling `dispose` multiple times is allowed, but calling any other method
       after calling `dispose` will cause a `TypeError`.
 
-      Will not throw.
+      Will not typically throw.
 
 ### Implementation Notes
 
@@ -416,9 +416,8 @@ appropriate corresponding `-Sync` methods of its own.
 SQL string and optionally bound parameters to a query. We will provide an
 implementation in the form of <code>SQL\`…\`</code> strings that can be safely
 interpolated with bound values and dynamic identifiers.
-[This was one of my motivations for working on this
-library](https://github.com/dyedgreen/deno-sqlite/pull/104). But it's
-non-essential sugar.
+[That was one of my motivations for working on this
+library](https://github.com/dyedgreen/deno-sqlite/pull/104).
 
 ### "Managed Transactions"
 

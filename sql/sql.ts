@@ -9,8 +9,10 @@ import * as driver from "./driver.ts";
 import { meta } from "./driver.ts";
 import * as errors from "./errors.ts";
 
-/** Creates a database handle/connector with the given driver and path.
-    @throws {errors.ConnectorValidationError} if the path was invalid. */
+/** Creates a database handle/connector with the given driver and path. May
+    validate the arguments (path), but will not open a connection yet.
+
+    May throw `DatabaseConnectorValidationError` if the path is invalid. */
 export const open = async <Driver extends driver.Driver = driver.Driver>(
   path: string,
   driverModule: { driver: Driver },
@@ -32,8 +34,7 @@ export class Database<Driver extends driver.Driver = driver.Driver> {
 
   /** Opens a new open connection to the database.
 
-      @throws {errors.NetworkError}
-  */
+      May throw DatabaseConnectivityError or DatabaseEngineError. */
   async connect(): Promise<Result<Connection<Driver>, Error>> {
     const driverConnection = await this.driverConnector.connect?.() ??
       this.driverConnector.connectSync?.() ??
@@ -62,7 +63,9 @@ export class Connection<
 
   /** Starts a new transaction in the connection. If if there is an already an
       active transaction in progress on this connection, this will block until
-      it is closed. */
+      it is closed.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`. */
   async startTransaction(): Promise<Transaction<Driver>> {
     return new Promise((resolve) => {
       this.transactionLock.use(async () => {
@@ -73,14 +76,33 @@ export class Connection<
     });
   }
 
-  /** Closes the connection. If there are currently transactions in progress,
-      this will block until they have all closed. */
+  /** Prepares a SQL query for execution in this connection without a
+      transaction.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`. */
+  async prepareStatement(
+    query: string,
+  ): Promise<Result<PreparedStatement<Driver>, Error>> {
+    return notImplemented();
+  }
+
+  /** Closes the connection. If there is an active transaction, this will block
+      until it is closed.
+
+      Will not typically throw. */
   async close(): Promise<void> {
     await this.transactionLock.dispose();
 
     this.driverConnection.close
       ? (await this.driverConnection.close())
       : this.driverConnection.closeSync?.();
+  }
+
+  /** Waits until the connection is closed.
+
+      Will not typically throw. */
+  async closed(): Promise<void> {
+    return notImplemented();
   }
 }
 
@@ -92,17 +114,13 @@ export class Transaction<
     private driverTransaction: driver.Connection<meta<Driver>>,
   ) {}
 
-  /** Prepares a SQL query for execution in this transaction. */
+  /** Prepares a SQL query for execution in this transaction.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`. */
   async prepareStatement(
     query: string,
   ): Promise<Result<PreparedStatement<Driver>, Error>> {
     return notImplemented();
-  }
-
-  async closed(): Promise<void> {
-    this.driverTransaction.closed
-      ? await this.driverTransaction.closed()
-      : this.driverTransaction.closeSync?.();
   }
 
   /** Closes the transaction with changes committed. */
@@ -116,11 +134,20 @@ export class Transaction<
   }
 
   /** Starts a nested transaction within this transaction. If a nested
-      transaction is already in progress, this will block until it is closed.
+      transaction is already in progress, this will wait until it is closed.
       While a nested transaction is in progress, queries should be executed
       through the inner-most active transaction, not the parent transaction, or
-      else they will block until the child transaction is closed. */
+      else they will wait until the child transaction is closed.
+
+      May throw DatabaseConnectivityError or DatabaseEngineError. */
   startTransaction(): Transaction<Driver> {
+    return notImplemented();
+  }
+
+  /** Waits until the transaction is closed.
+
+      Will not typically throw. */
+  async closed(): Promise<void> {
     return notImplemented();
   }
 }
@@ -129,9 +156,14 @@ export class PreparedStatement<
   Driver extends driver.Driver,
 > {
   /** Executes the query with an optional array of bound values, and
-      incrementally reads rows from the database. The iterator should be
-      disposed of by calling .return() (which a for await statement will do
-      automatically). */
+      incrementally reads rows from the database. The iterators should be
+      disposed of by calling `.return()` (which a `for`/`for await` statement
+      will do automatically) to release associated resources.
+
+      Will throw TypeError if the generators are consumed after the associated
+      transaction or connection is closed.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`. */
   async *query(
     args?: Array<meta<Driver>["BoundValue"]>,
   ): AsyncGenerator<Iterator<meta<Driver>["ResultValue"]>> {
@@ -139,7 +171,9 @@ export class PreparedStatement<
   }
 
   /** Executes the query with an optional array of bound values, returning only
-      the first row of results, as an array. */
+      the first row of results, as an array.
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`. */
   async queryRow(
     args?: Array<meta<Driver>["BoundValue"]>,
   ): Promise<Array<meta<Driver>["ResultValue"]>> {
@@ -147,11 +181,13 @@ export class PreparedStatement<
   }
 
   /** Executes the query with an optional array of bound values, without
-      returning any result rows. A insertedRowId and affectedRowCount value may
-      be returned, but note that for some drivers these values may reflect a
-      previous query if the executed one did not actually insert or affect any
+      returning any result rows. A `insertedRowId` and `affectedRowCount` value
+      may be returned, but note that for some drivers these values may reflect
+      a previous query if the executed one did not actually insert or affect any
       rows. (These should only be absent if the driver is certain that they're
-      not relevant to the executed query, or doesn't support them at all.) */
+      not relevant to the executed query, or doesn't support them at all.)
+
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`. */
   async exec(
     args?: Array<meta<Driver>["BoundValue"]>,
   ): Promise<{
@@ -162,8 +198,11 @@ export class PreparedStatement<
   }
 
   /** Disposes of this object so that any associated resources can be freed.
-      Calling dispose multiple times is safe, but any other operations with the
-      object may throw an error after it has been disposed. */
+
+      Calling dispose multiple times is allowed, but calling any other method
+      after calling dispose will cause a `TypeError`.
+
+      Will not typically throw. */
   async dispose(): Promise<void> {
     return notImplemented();
   }
