@@ -13,6 +13,10 @@ inspired by Go's [**database**](https://golang.org/pkg/database/) package.
 
 - [**x/database/sql**](./sql/)
 
+## Docs
+
+- [Docs](./docs/)
+
 ## Style
 
 Use `deno fmt`. Use `// deno-fmt-ignore` sparingly.

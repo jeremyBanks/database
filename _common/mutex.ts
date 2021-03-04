@@ -1,6 +1,6 @@
 // deno-lint-ignore-file ban-types require-await
 
-import { log } from "./deps.ts";
+import { async, log } from "./deps.ts";
 
 /**
 Simple async mutex, with object access enforced by revokable proxies.
@@ -20,13 +20,37 @@ export class Mutex<Resource extends object = {}> {
 
   /**
   Marks the mutex as "poisoned" with a given error, that will be raised on
-  any future attempts to use the mutex. For use in case of error or when the
+  any future attempts to use the mutex. For internal use when the
   mutex is being disposed of.
   */
   private poison(error: Error) {
     if (this.poisonedError) throw this.poisonedError;
 
     this.poisonedError = error;
+  }
+
+  /**
+  Blocks until the lock is obtained, then returns the proxied value and a
+  callback to release the lock.
+   */
+  async lock(): Promise<{
+    resource: Resource;
+    release(): void;
+  }> {
+    const handle = async.deferred<void>();
+    const result = async.deferred<{
+      resource: Resource;
+      release(): void;
+    }>();
+    this.use(async (resource) => {
+      result.resolve({
+        resource,
+        release() {
+          handle.resolve();
+        },
+      });
+    });
+    return result;
   }
 
   /**

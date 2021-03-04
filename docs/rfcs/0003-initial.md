@@ -187,7 +187,7 @@ good idea.)
 
       May throw `DatabaseConnectivityError`.
   - `.close[Sync](): void`
-    - Close the connection, waiting until it is closed.
+    - Close the connection, blocking until it is closed.
 
       Must not throw.
 
@@ -202,30 +202,30 @@ good idea.)
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
 
       Drivers may assume that these iterables will not be consumed after the
-      associated Transaction or Connection has closed.
+      associated `Transaction` or `Connection` has closed.
   - `.commit[Sync](): void`
-    - Closes the transaction and any child transactions, with any changes
+    - Closes this `Transaction` and any child transactions, with any changes
       committed and saved.
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
 
-      Drivers may assume that no methods on the Transaction will be called after
-      `commit` has been called.
+      Drivers may assume that no methods on the `Transaction` will be called
+      after `commit` has been called.
   - `.rollback[Sync](): void`
-    - Closes the transaction and any child transactions, with any changes rolled
-      back.
+    - Closes the `Transaction` and any child `Transaction`s, with any changes
+      rolled back.
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
 
-      Drivers may assume that no methods on the Transaction will be called after
-      `rollback` has been called.
+      Drivers may assume that no methods on the `Transaction` will be called
+      after `rollback` has been called.
   - `.startTransaction[Sync](): driver.Transaction`
-    - Starts a new child transaction within this transaction.
+    - Starts a new child `Transaction` within this `Transaction`.
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
 
-      Drivers may assume no methods will be called on this transaction while it
-      has an open child transaction, except for `rollback` and `commit`.
+      Drivers may assume no methods will be called on this `Transaction` while
+      it has an open child transaction, except for `rollback` and `commit`.
 
 ### Driver `Meta` Type Information
 
@@ -269,8 +269,8 @@ for now, even if the underlying driver supports sync operations.
 - `sql.Connection` class
   - `.startTransaction(): Promise<sql.Transaction>`
     - Starts a new transaction in the connection. If if there is an already an
-      active transaction in progress on this connection, this will wait until it
-      is closed.
+      active transaction in progress on this connection, this will block until
+      it is closed.
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.prepareStatement(query: string): Promise<sql.PreparedStatement>`
@@ -279,12 +279,12 @@ for now, even if the underlying driver supports sync operations.
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.close(): Promise<void>`
-    - Closes the connection. If there is an active transaction, this will wait
+    - Closes the connection. If there is an active transaction, this will block
       until it is closed.
 
       Will not typically throw.
   - `.closed(): Promise<void>`
-    - Waits until the connection is closed.
+    - Blocks until the connection is closed.
 
       Will not typically throw.
 - `sql.Transaction` class
@@ -304,14 +304,14 @@ for now, even if the underlying driver supports sync operations.
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.startTransaction(): Promise<sql.Transaction>`
     - Starts a nested transaction within this transaction. If a nested
-      transaction is already in progress, this will wait until it is closed.
+      transaction is already in progress, this will block until it is closed.
       While a nested transaction is in progress, queries should be executed
       through the inner-most active transaction, not the parent transaction, or
-      else they will wait until the child transaction is closed.
+      else they will block until the child transaction is closed.
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.closed(): Promise<void>`
-    - Waits until the transaction is closed.
+    - Blocks until the transaction is closed.
 
       Will not typically throw.
 - `sql.PreparedStatement` class
@@ -319,10 +319,10 @@ for now, even if the underlying driver supports sync operations.
     - Executes the query with an optional array of bound values, and
       incrementally reads rows from the database. The iterator should be
       disposed of by calling `.return()` (which a `for await` statement will do
-      automatically).
+      automatically), or they may hold their associated transactions/connections
+      open.
 
-      Will throw `TypeError` if the generators are consumed after the associated
-      transaction or connection is closed.
+      May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   - `.queryRow(args?: Array<BoundValue>: Promise<Array<ResultValue>>`

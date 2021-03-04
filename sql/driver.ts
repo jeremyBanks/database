@@ -103,7 +103,7 @@ export interface Connection<Meta extends MetaBase = MetaBase>
   affectedRowsSync?(): number | undefined;
 
   /**
-  Close the connection, waiting until it is closed.
+  Close the connection, blocking until it is closed.
 
   Must not throw.
 
@@ -122,13 +122,13 @@ export interface Connection<Meta extends MetaBase = MetaBase>
   closeSync?(): void;
 
   /**
-  Waits until the connection is closed.
+  Blocks until the connection is closed.
 
   Must not throw.
   */
   closed?(): Promise<void>;
   /**
-  Waits until the connection is closed.
+  Blocks until the connection is closed.
 
   Must not throw.
   */
@@ -138,34 +138,67 @@ export interface Connection<Meta extends MetaBase = MetaBase>
 export interface Transaction<Meta extends MetaBase = MetaBase>
   extends TransactionStarter<Meta>, Queryer<Meta> {
   /**
-  Closes the transaction, with any changes rolled back. This object must not
-  be used any more.
-  */
-  rollback?(): Promise<void>;
-  /**
-  Closes the transaction, with any changes rolled back. This object must not
-  be used any more. */
-  rollbackSync?(): void;
+  Closes this `Transaction` and any child `Transaction`s, with any changes
+  committed and saved.
 
-  /**
-  Closes the transaction, with any changes committed and saved. This object
-  must not be used any more.
+  May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
+
+  Drivers may assume that no methods on the `Transaction` will be called
+  after `commit` has been called.
   */
   commit?(): Promise<void>;
   /**
-  Closes the transaction, with any changes committed and saved. This object
-  must not be used any more.
+  Closes this `Transaction` and any child `Transaction`s, with any changes
+  committed and saved.
+
+  May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
+
+  Drivers may assume that no methods on the `Transaction` will be called
+  after `commit` has been called.
   */
   commitSync?(): void;
+
+  /**
+  Closes the `Transaction` and any child `Transaction`s, with any changes rolled
+  back.
+
+  May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
+
+  Drivers may assume that no methods on the `Transaction` will be called
+  after `rollback` has been called.
+  */
+  rollback?(): Promise<void>;
+  /**
+  Closes the `Transaction` and any child `Transaction`s, with any changes rolled
+  back.
+
+  May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
+
+  Drivers may assume that no methods on the `Transaction` will be called
+  after `rollback` has been called.
+  */
+  rollbackSync?(): void;
 }
 
 export interface TransactionStarter<Meta extends MetaBase = MetaBase> {
   /**
-  Starts a new transaction.
+  Starts a new child transaction within this transaction.
+
+  May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
+
+  Drivers may assume no methods will be called on this object while
+  it has an open child transaction, except for `rollback` and `commit` if it is
+  a `Transaction` or `close` if it a `Connection`.
   */
   startTransaction?(): Promise<Transaction<Meta>>;
   /**
-  Starts a new transaction.
+  Starts a new child transaction within this transaction.
+
+  May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
+
+  Drivers may assume no methods will be called on this object while
+  it has an open child transaction, except for `rollback` and `commit` if it is
+  a `Transaction` or `close` if it a `Connection`.
   */
   startTransactionSync?(): Transaction<Meta>;
 }

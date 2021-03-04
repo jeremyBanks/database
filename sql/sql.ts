@@ -1,12 +1,18 @@
 // deno-lint-ignore-file require-await require-yield
 
 import { notImplemented } from "../_common/assertions.ts";
-
+import { async } from "../_common/deps.ts";
 import { Mutex } from "../_common/mutex.ts";
 import { Infallible, Result } from "../_common/result.ts";
 
 import * as driver from "./driver.ts";
 import * as errors from "./errors.ts";
+
+const throwMissingImplementation = (missing = "a required method"): never => {
+  throw new errors.MissingImplementationDriverTypeError(
+    `Database driver is missing an implementation of ${missing}.`,
+  );
+};
 
 /**
 Creates a database handle/connector with the given driver and path. May
@@ -24,7 +30,7 @@ export const open = async <
   const driver = driverModule.driver;
   const connector = await driver.openConnector?.(path) ??
     driver.openConnectorSync?.(path) ??
-    notImplemented("driver missing .open[Sync] implementation");
+    throwMissingImplementation("Driver.openConnector[Sync]");
   return new Database(connector);
 };
 
@@ -32,9 +38,7 @@ export class Database<
   Meta extends driver.MetaBase,
   Driver extends driver.Driver<Meta>,
 > {
-  constructor(
-    private driverConnector: driver.Connector<Meta>,
-  ) {}
+  constructor(private driverConnector: driver.Connector<Meta>) {}
 
   private connections = new Set<Connection<Meta, Driver>>();
 
@@ -43,10 +47,10 @@ export class Database<
 
   May throw DatabaseConnectivityError or DatabaseEngineError.
   */
-  async connect(): Promise<Result<Connection<Meta, Driver>, Error>> {
+  async connect(): Promise<Connection<Meta, Driver>> {
     const driverConnection = await this.driverConnector.connect?.() ??
       this.driverConnector.connectSync?.() ??
-      notImplemented("driver missing .connect[Sync] implementation");
+      throwMissingImplementation("Connector.connect[Sync]");
 
     const connection = new Connection<Meta, Driver>(
       driverConnection,
@@ -61,14 +65,12 @@ export class Connection<
   Meta extends driver.MetaBase,
   Driver extends driver.Driver<Meta>,
 > {
-  constructor(
-    private driverConnection: driver.Connection<Meta>,
-  ) {}
+  constructor(private driverConnection: driver.Connection<Meta>) {}
 
   /**
   Lock that must be held by the currently-open child transaction.
   */
-  private transactionLock = Mutex.marker();
+  _transactionLock = Mutex.marker();
 
   /**
   Starts a new transaction in the connection. If if there is an already an
@@ -78,7 +80,27 @@ export class Connection<
   May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   */
   async startTransaction(): Promise<Transaction<Meta, Driver>> {
-    return notImplemented();
+    const result = async.deferred<Transaction<Meta, Driver>>();
+    this._transactionLock.use(async () => {
+      // Don't start the transaction until we acquire the transitionLock.
+      let transaction;
+      try {
+        const driverTransaction =
+          await this.driverConnection.startTransaction?.() ??
+            this.driverConnection.startTransactionSync?.() ??
+            notImplemented("Connection.startTransaction[Sync]");
+
+        transaction = new Transaction(driverTransaction);
+      } catch (error) {
+        result.reject(error);
+        return;
+      }
+      result.resolve(transaction);
+
+      // Hold transitionLock until the transaction is closed.
+      await transaction.closed();
+    });
+    return result;
   }
 
   /**
@@ -88,9 +110,9 @@ export class Connection<
   May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   */
   async prepareStatement(
-    query: string,
-  ): Promise<Result<PreparedStatement<Meta, Driver>, Error>> {
-    return notImplemented();
+    sqlString: string,
+  ): Promise<PreparedStatement<Meta, Driver>> {
+    return new PreparedStatement(this, sqlString);
   }
 
   /**
@@ -100,31 +122,70 @@ export class Connection<
   Will not typically throw.
   */
   async close(): Promise<void> {
-    await this.transactionLock.dispose();
+    await this._transactionLock.dispose();
 
     this.driverConnection.close
       ? (await this.driverConnection.close())
       : this.driverConnection.closeSync?.();
+
+    this.#closed.resolve();
   }
 
   /**
-  Waits until the connection is closed.
+  Blocks until the connection is closed.
 
   Will not typically throw.
   */
   async closed(): Promise<void> {
-    return notImplemented();
+    return this.#closed;
   }
+
+  #closed = async.deferred<void>();
 }
 
 export class Transaction<
   Meta extends driver.MetaBase,
   Driver extends driver.Driver<Meta>,
 > {
-  constructor(
-    private driver: Driver,
-    private driverTransaction: driver.Connection<Meta>,
-  ) {}
+  constructor(private driverTransaction: driver.Transaction<Meta>) {}
+
+  /**
+  Lock that must be held by the currently-open child transaction.
+  */
+  _transactionLock = Mutex.marker();
+
+  /**
+  Starts a nested transaction within this transaction. If a nested
+  transaction is already in progress, this will block until it is closed.
+  While a nested transaction is in progress, queries should be executed
+  through the inner-most active transaction, not the parent transaction, or
+  else they will block until the child transaction is closed.
+
+  May throw DatabaseConnectivityError or DatabaseEngineError.
+  */
+  async startTransaction(): Promise<Transaction<Meta, Driver>> {
+    const result = async.deferred<Transaction<Meta, Driver>>();
+    this._transactionLock.use(async () => {
+      // Don't start the transaction until we acquire the transitionLock.
+      let transaction;
+      try {
+        const driverTransaction =
+          await this.driverTransaction.startTransaction?.() ??
+            this.driverTransaction.startTransactionSync?.() ??
+            notImplemented("Transaction.startTransaction[Sync]");
+
+        transaction = new Transaction(driverTransaction);
+      } catch (error) {
+        result.reject(error);
+        return;
+      }
+      result.resolve(transaction);
+
+      // Hold transitionLock until the transaction is closed.
+      await transaction.closed();
+    });
+    return result;
+  }
 
   /**
   Prepares a SQL query for execution in this transaction.
@@ -133,62 +194,84 @@ export class Transaction<
   */
   async prepareStatement(
     query: string,
-  ): Promise<Result<PreparedStatement<Meta, Driver>, Error>> {
-    return notImplemented();
-  }
-
-  /** Closes the transaction with changes committed. */
-  async commit(): Promise<Result<void, Error>> {
-    return notImplemented();
-  }
-
-  /** Closes the transaction with changes rolled back. */
-  async rollback(): Promise<PreparedStatement<Meta, Driver>> {
+  ): Promise<PreparedStatement<Meta, Driver>> {
     return notImplemented();
   }
 
   /**
-  Starts a nested transaction within this transaction. If a nested
-  transaction is already in progress, this will wait until it is closed.
-  While a nested transaction is in progress, queries should be executed
-  through the inner-most active transaction, not the parent transaction, or
-  else they will wait until the child transaction is closed.
+  Closes the transaction and any open nested transactions with changes
+  committed.
 
-  May throw DatabaseConnectivityError or DatabaseEngineError.
+  May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   */
-  startTransaction(): Transaction<Meta, Driver> {
-    return notImplemented();
+  async commit(): Promise<void> {
+    this.driverTransaction.commit
+      ? await this.driverTransaction.commit()
+      : this.driverTransaction.commitSync
+      ? this.driverTransaction.commitSync()
+      : throwMissingImplementation("Transaction.commit[Sync]");
+    this.#closed.resolve();
   }
 
   /**
-  Waits until the transaction is closed.
+  Closes the transaction and any open nested transactions with changes
+  rolled back.
+
+  May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
+  */
+  async rollback(): Promise<void> {
+    this.driverTransaction.rollback
+      ? await this.driverTransaction.rollback()
+      : this.driverTransaction.rollbackSync
+      ? this.driverTransaction.rollbackSync()
+      : throwMissingImplementation("Transaction.rollback[Sync]");
+    this.#closed.resolve();
+  }
+
+  /**
+  Blocks until the transaction is closed.
 
   Will not typically throw.
   */
   async closed(): Promise<void> {
-    return notImplemented();
+    return this.#closed;
   }
+
+  #closed = async.deferred<void>();
 }
 
 export class PreparedStatement<
   Meta extends driver.MetaBase,
   Driver extends driver.Driver<Meta>,
 > {
+  // Shim implementation, we don't actually use the driver's prepare statement
+  // API directly at this time.
+
+  constructor(
+    private parent: Transaction<Meta, Driver> | Connection<Meta, Driver>,
+    private sqlString: string,
+  ) {}
+
   /**
   Executes the query with an optional array of bound values, and
   incrementally reads rows from the database. The iterators should be
   disposed of by calling `.return()` (which a `for`/`for await` statement
-  will do automatically) to release associated resources.
-
-  Will throw `TypeError` if the generators are consumed after the associated
-  transaction or connection is closed.
+  will do automatically) to release associated resources, or they may hold
+  their associated transactions/connections open.
 
   May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   */
   async *query(
     args?: Array<Meta["BoundValue"]>,
   ): AsyncGenerator<Iterator<Meta["ResultValue"]>> {
-    return notImplemented();
+    const handle = await this.parent._transactionLock.lock();
+
+    notImplemented();
+
+    // TODO: how to ensure this gets invoked if the iterator is closed early
+    // TODO: with .return()? I don't think we can using just the generator
+    // TODO: interface, we need to implement more.
+    handle.release();
   }
 
   /**
