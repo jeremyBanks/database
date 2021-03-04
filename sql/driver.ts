@@ -115,17 +115,17 @@ export interface Transaction<Meta extends MetaBase = MetaBase>
   extends TransactionStarter<Meta>, Queryer<Meta> {
   /** Closes the transaction, with any changes rolled back. This object must not
         be used any more. */
-  rollback?(): Promise<undefined>;
+  rollback?(): Promise<void>;
   /** Closes the transaction, with any changes rolled back. This object must not
       be used any more. */
-  rollbackSync?(): undefined;
+  rollbackSync?(): void;
 
   /** Closes the transaction, with any changes committed and saved. This object
       must not be used any more. */
-  commit?(): Promise<undefined>;
+  commit?(): Promise<void>;
   /** Closes the transaction, with any changes committed and saved. This object
       must not be used any more. */
-  commitSync?(): undefined;
+  commitSync?(): void;
 }
 
 export interface TransactionStarter<Meta extends MetaBase = MetaBase> {

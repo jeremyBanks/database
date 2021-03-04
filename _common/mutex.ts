@@ -7,6 +7,11 @@ import { log } from "./deps.ts";
 export class Mutex<Resource extends object = {}> {
   constructor(private resource: Resource) {}
 
+  /** A mutex without any associated value. */
+  static marker() {
+    return new Mutex<Record<never, never>>({});
+  }
+
   private poisonedError: undefined | Error;
 
   private queueTail: undefined | Promise<void>;
@@ -65,7 +70,7 @@ export class Mutex<Resource extends object = {}> {
   /** Allows any currently-queued operations execute, then poisons the mutex. */
   async dispose(): Promise<void> {
     await this.use(async () => {
-      this.poison(new Error("mutex disposed"));
+      this.poison(new TypeError("mutex disposed"));
     });
   }
 }

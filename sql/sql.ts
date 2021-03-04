@@ -58,8 +58,8 @@ export class Connection<
     private driverConnection: driver.Connection<meta<Driver>>,
   ) {}
 
-  /** Lock that must be held by the currently-executing child transaction. */
-  private transactionLock = new Mutex({});
+  /** Lock that must be held by the currently-open child transaction. */
+  private transactionLock = Mutex.marker();
 
   /** Starts a new transaction in the connection. If if there is an already an
       active transaction in progress on this connection, this will block until
@@ -67,13 +67,7 @@ export class Connection<
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`. */
   async startTransaction(): Promise<Transaction<Driver>> {
-    return new Promise((resolve) => {
-      this.transactionLock.use(async () => {
-        const transaction = new Transaction<Driver>();
-        resolve(transaction);
-        await transaction.closed();
-      });
-    });
+    return notImplemented();
   }
 
   /** Prepares a SQL query for execution in this connection without a
