@@ -6,42 +6,45 @@ import { Mutex } from "../_common/mutex.ts";
 import { Infallible, Result } from "../_common/result.ts";
 
 import * as driver from "./driver.ts";
-import { meta } from "./driver.ts";
 import * as errors from "./errors.ts";
 
 /** Creates a database handle/connector with the given driver and path. May
     validate the arguments (path), but will not open a connection yet.
 
     May throw `DatabaseConnectorValidationError` if the path is invalid. */
-export const open = async <Driver extends driver.Driver = driver.Driver>(
+export const open = async <
+  Meta extends driver.MetaBase,
+  Driver extends driver.Driver<Meta>,
+>(
   path: string,
   driverModule: { driver: Driver },
-): Promise<Database<Driver>> => {
+): Promise<Database<Meta, Driver>> => {
   const driver = driverModule.driver;
   const connector = await driver.openConnector?.(path) ??
     driver.openConnectorSync?.(path) ??
     notImplemented("driver missing .open[Sync] implementation");
-  return new Database<Driver>(driver, connector);
+  return new Database(connector);
 };
 
-export class Database<Driver extends driver.Driver = driver.Driver> {
+export class Database<
+  Meta extends driver.MetaBase,
+  Driver extends driver.Driver<Meta>,
+> {
   constructor(
-    private driver: Driver,
-    private driverConnector: driver.Connector<meta<Driver>>,
+    private driverConnector: driver.Connector<Meta>,
   ) {}
 
-  private connections = new Set<Connection<Driver>>();
+  private connections = new Set<Connection<Meta, Driver>>();
 
   /** Opens a new open connection to the database.
 
       May throw DatabaseConnectivityError or DatabaseEngineError. */
-  async connect(): Promise<Result<Connection<Driver>, Error>> {
+  async connect(): Promise<Result<Connection<Meta, Driver>, Error>> {
     const driverConnection = await this.driverConnector.connect?.() ??
       this.driverConnector.connectSync?.() ??
       notImplemented("driver missing .connect[Sync] implementation");
 
-    const connection = new Connection<Driver>(
-      this.driver,
+    const connection = new Connection<Meta, Driver>(
       driverConnection,
     );
 
@@ -51,11 +54,11 @@ export class Database<Driver extends driver.Driver = driver.Driver> {
 }
 
 export class Connection<
-  Driver extends driver.Driver,
+  Meta extends driver.MetaBase,
+  Driver extends driver.Driver<Meta>,
 > {
   constructor(
-    private driver: Driver,
-    private driverConnection: driver.Connection<meta<Driver>>,
+    private driverConnection: driver.Connection<Meta>,
   ) {}
 
   /** Lock that must be held by the currently-open child transaction. */
@@ -66,7 +69,7 @@ export class Connection<
       it is closed.
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`. */
-  async startTransaction(): Promise<Transaction<Driver>> {
+  async startTransaction(): Promise<Transaction<Meta, Driver>> {
     return notImplemented();
   }
 
@@ -76,7 +79,7 @@ export class Connection<
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`. */
   async prepareStatement(
     query: string,
-  ): Promise<Result<PreparedStatement<Driver>, Error>> {
+  ): Promise<Result<PreparedStatement<Meta, Driver>, Error>> {
     return notImplemented();
   }
 
@@ -101,11 +104,12 @@ export class Connection<
 }
 
 export class Transaction<
-  Driver extends driver.Driver,
+  Meta extends driver.MetaBase,
+  Driver extends driver.Driver<Meta>,
 > {
   constructor(
     private driver: Driver,
-    private driverTransaction: driver.Connection<meta<Driver>>,
+    private driverTransaction: driver.Connection<Meta>,
   ) {}
 
   /** Prepares a SQL query for execution in this transaction.
@@ -113,7 +117,7 @@ export class Transaction<
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`. */
   async prepareStatement(
     query: string,
-  ): Promise<Result<PreparedStatement<Driver>, Error>> {
+  ): Promise<Result<PreparedStatement<Meta, Driver>, Error>> {
     return notImplemented();
   }
 
@@ -123,7 +127,7 @@ export class Transaction<
   }
 
   /** Closes the transaction with changes rolled back. */
-  async rollback(): Promise<PreparedStatement<Driver>> {
+  async rollback(): Promise<PreparedStatement<Meta, Driver>> {
     return notImplemented();
   }
 
@@ -134,7 +138,7 @@ export class Transaction<
       else they will wait until the child transaction is closed.
 
       May throw DatabaseConnectivityError or DatabaseEngineError. */
-  startTransaction(): Transaction<Driver> {
+  startTransaction(): Transaction<Meta, Driver> {
     return notImplemented();
   }
 
@@ -147,7 +151,8 @@ export class Transaction<
 }
 
 export class PreparedStatement<
-  Driver extends driver.Driver,
+  Meta extends driver.MetaBase,
+  Driver extends driver.Driver<Meta>,
 > {
   /** Executes the query with an optional array of bound values, and
       incrementally reads rows from the database. The iterators should be
@@ -159,8 +164,8 @@ export class PreparedStatement<
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`. */
   async *query(
-    args?: Array<meta<Driver>["BoundValue"]>,
-  ): AsyncGenerator<Iterator<meta<Driver>["ResultValue"]>> {
+    args?: Array<Meta["BoundValue"]>,
+  ): AsyncGenerator<Iterator<Meta["ResultValue"]>> {
     return notImplemented();
   }
 
@@ -169,8 +174,8 @@ export class PreparedStatement<
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`. */
   async queryRow(
-    args?: Array<meta<Driver>["BoundValue"]>,
-  ): Promise<Array<meta<Driver>["ResultValue"]>> {
+    args?: Array<Meta["BoundValue"]>,
+  ): Promise<Array<Meta["ResultValue"]>> {
     return notImplemented();
   }
 
@@ -183,9 +188,9 @@ export class PreparedStatement<
 
       May throw `DatabaseConnectivityError` or `DatabaseEngineError`. */
   async exec(
-    args?: Array<meta<Driver>["BoundValue"]>,
+    args?: Array<Meta["BoundValue"]>,
   ): Promise<{
-    insertedRowId?: meta<Driver>["ResultValue"];
+    insertedRowId?: Meta["ResultValue"];
     affectedRowCount?: number;
   }> {
     return notImplemented();

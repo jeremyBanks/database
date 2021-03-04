@@ -28,10 +28,6 @@ export interface Module<Meta extends MetaBase = MetaBase> {
 export interface Driver<Meta extends MetaBase = MetaBase>
   extends ConnectorOpener<Meta> {}
 
-/** Helper type function to get the associated Meta type from a Driver type. */
-export type meta<D extends Driver> = D extends Driver<infer Meta> ? Meta
-  : never;
-
 export interface ConnectorOpener<Meta extends MetaBase = MetaBase> {
   /** Prepares a connector object that can be used to make connections to a
       database with the given path.
