@@ -212,7 +212,7 @@ export interface Queryer<Meta extends MetaBase = MetaBase> {
   query?(
     query: string,
     values: Array<Meta["BoundValue"]>,
-  ): AsyncIterable<Iterable<Meta["ResultValue"]>>;
+  ): Promise<ResultRows>;
   /**
   Executes a query, returning the results as an Iterable of Iterable
   rows of ResultValues. These iterables must not be used after the
@@ -221,5 +221,54 @@ export interface Queryer<Meta extends MetaBase = MetaBase> {
   querySync?(
     query: string,
     values: Array<Meta["BoundValue"]>,
-  ): Iterable<Iterable<Meta["ResultValue"]>>;
+  ): ResultRows<Meta>;
+}
+
+export interface ResultRows<Meta extends MetaBase = MetaBase> {
+  /**
+  Reads the next row from a query result, or `undefined` if it's exhausted.
+
+  May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
+  */
+  next(): Promise<ResultRow<Meta> | undefined>;
+  /**
+  Reads the next row from a query result, or `undefined` if it's exhausted.
+
+  May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
+  */
+  nextSync(): ResultRow<Meta> | undefined;
+
+  /**
+  Close the the result handle, blocking until it is closed.
+
+  Must not throw.
+
+  Drivers may assume that no other methods on the ResultRows will be called
+  after close has been called, but close may be called multiple times.
+  */
+  close?(): Promise<void>;
+  /**
+  Close the the result handle, blocking until it's closed.
+
+  Must not throw.
+
+  Drivers may assume that no other methods on the ResultRows will be called
+  after close has been called, but close may be called multiple times.
+  */
+  closeSync?(): void;
+}
+
+// Note that you can just use an Array to satisfy this interface.
+
+export interface ResultRow<Meta extends MetaBase = MetaBase> extends
+  /**
+    Iterate over each column value of the row.
+
+    Must not throw. (So this must not require additional engine operations.)
+    */
+  Iterable<Meta["ResultValue"]> {
+  /**
+  The number of columns in the row.
+  */
+  readonly length: number;
 }

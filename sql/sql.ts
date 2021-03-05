@@ -3,7 +3,6 @@
 import { notImplemented } from "../_common/assertions.ts";
 import { async } from "../_common/deps.ts";
 import { Mutex } from "../_common/mutex.ts";
-import { Infallible, Result } from "../_common/result.ts";
 
 import * as driver from "./driver.ts";
 import * as errors from "./errors.ts";
@@ -38,9 +37,9 @@ export class Database<
   Meta extends driver.MetaBase,
   Driver extends driver.Driver<Meta>,
 > {
-  constructor(private driverConnector: driver.Connector<Meta>) {}
-
-  private connections = new Set<Connection<Meta, Driver>>();
+  constructor(
+    private driverConnector: driver.Connector<Meta>,
+  ) {}
 
   /**
   Opens a new open connection to the database.
@@ -56,7 +55,6 @@ export class Database<
       driverConnection,
     );
 
-    this.connections.add(connection);
     return connection;
   }
 }
@@ -65,12 +63,14 @@ export class Connection<
   Meta extends driver.MetaBase,
   Driver extends driver.Driver<Meta>,
 > {
-  constructor(private driverConnection: driver.Connection<Meta>) {}
+  constructor(
+    private driverConnection: driver.Connection<Meta>,
+  ) {}
 
   /**
-  Lock that must be held by the currently-open child transaction.
+  Lock that must be held by the currently-open child transaction or operation.
   */
-  _transactionLock = Mutex.marker();
+  private operationLock = new Mutex(this);
 
   /**
   Starts a new transaction in the connection. If if there is an already an
@@ -81,16 +81,19 @@ export class Connection<
   */
   async startTransaction(): Promise<Transaction<Meta, Driver>> {
     const result = async.deferred<Transaction<Meta, Driver>>();
-    this._transactionLock.use(async () => {
+    this.operationLock.use(async () => {
       // Don't start the transaction until we acquire the transitionLock.
       let transaction;
       try {
         const driverTransaction =
           await this.driverConnection.startTransaction?.() ??
             this.driverConnection.startTransactionSync?.() ??
-            notImplemented("Connection.startTransaction[Sync]");
+            throwMissingImplementation("Connection.startTransaction[Sync]");
 
-        transaction = new Transaction(driverTransaction);
+        transaction = new Transaction(
+          this.driverConnection,
+          driverTransaction,
+        );
       } catch (error) {
         result.reject(error);
         return;
@@ -112,7 +115,12 @@ export class Connection<
   async prepareStatement(
     sqlString: string,
   ): Promise<PreparedStatement<Meta, Driver>> {
-    return new PreparedStatement(this, sqlString);
+    return new PreparedStatement(
+      this.driverConnection,
+      undefined,
+      this.operationLock,
+      sqlString,
+    );
   }
 
   /**
@@ -122,13 +130,13 @@ export class Connection<
   Will not typically throw.
   */
   async close(): Promise<void> {
-    await this._transactionLock.dispose();
+    await this.operationLock.dispose();
 
     this.driverConnection.close
       ? (await this.driverConnection.close())
       : this.driverConnection.closeSync?.();
 
-    this.#closed.resolve();
+    this.closedDeferred.resolve();
   }
 
   /**
@@ -137,22 +145,25 @@ export class Connection<
   Will not typically throw.
   */
   async closed(): Promise<void> {
-    return this.#closed;
+    return this.closedDeferred;
   }
 
-  #closed = async.deferred<void>();
+  private closedDeferred = async.deferred<void>();
 }
 
 export class Transaction<
   Meta extends driver.MetaBase,
   Driver extends driver.Driver<Meta>,
 > {
-  constructor(private driverTransaction: driver.Transaction<Meta>) {}
+  constructor(
+    private driverConnection: driver.Connection<Meta>,
+    private driverTransaction: driver.Transaction<Meta>,
+  ) {}
 
   /**
-  Lock that must be held by the currently-open child transaction.
+  Lock that must be held by the currently-open child transaction or operation.
   */
-  _transactionLock = Mutex.marker();
+  private operationLock = new Mutex(this);
 
   /**
   Starts a nested transaction within this transaction. If a nested
@@ -165,16 +176,19 @@ export class Transaction<
   */
   async startTransaction(): Promise<Transaction<Meta, Driver>> {
     const result = async.deferred<Transaction<Meta, Driver>>();
-    this._transactionLock.use(async () => {
+    this.operationLock.use(async () => {
       // Don't start the transaction until we acquire the transitionLock.
       let transaction;
       try {
         const driverTransaction =
           await this.driverTransaction.startTransaction?.() ??
             this.driverTransaction.startTransactionSync?.() ??
-            notImplemented("Transaction.startTransaction[Sync]");
+            throwMissingImplementation("Transaction.startTransaction[Sync]");
 
-        transaction = new Transaction(driverTransaction);
+        transaction = new Transaction(
+          this.driverConnection,
+          driverTransaction,
+        );
       } catch (error) {
         result.reject(error);
         return;
@@ -193,9 +207,14 @@ export class Transaction<
   May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   */
   async prepareStatement(
-    query: string,
+    sqlString: string,
   ): Promise<PreparedStatement<Meta, Driver>> {
-    return notImplemented();
+    return new PreparedStatement(
+      this.driverConnection,
+      this.driverTransaction,
+      this.operationLock,
+      sqlString,
+    );
   }
 
   /**
@@ -210,7 +229,7 @@ export class Transaction<
       : this.driverTransaction.commitSync
       ? this.driverTransaction.commitSync()
       : throwMissingImplementation("Transaction.commit[Sync]");
-    this.#closed.resolve();
+    this.closedDeferred.resolve();
   }
 
   /**
@@ -225,7 +244,7 @@ export class Transaction<
       : this.driverTransaction.rollbackSync
       ? this.driverTransaction.rollbackSync()
       : throwMissingImplementation("Transaction.rollback[Sync]");
-    this.#closed.resolve();
+    this.closedDeferred.resolve();
   }
 
   /**
@@ -234,10 +253,10 @@ export class Transaction<
   Will not typically throw.
   */
   async closed(): Promise<void> {
-    return this.#closed;
+    return this.closedDeferred;
   }
 
-  #closed = async.deferred<void>();
+  closedDeferred = async.deferred<void>();
 }
 
 export class PreparedStatement<
@@ -248,7 +267,9 @@ export class PreparedStatement<
   // API directly at this time.
 
   constructor(
-    private parent: Transaction<Meta, Driver> | Connection<Meta, Driver>,
+    private driverConnection: driver.Connection<Meta>,
+    private driverTransaction: driver.Transaction<Meta> | undefined,
+    private operationLock: Mutex<Record<never, never>>,
     private sqlString: string,
   ) {}
 
@@ -263,8 +284,8 @@ export class PreparedStatement<
   */
   async *query(
     args?: Array<Meta["BoundValue"]>,
-  ): AsyncGenerator<Iterator<Meta["ResultValue"]>> {
-    const handle = await this.parent._transactionLock.lock();
+  ): AsyncGenerator<Iterable<Meta["ResultValue"]>> {
+    const handle = await this.operationLock.lock();
 
     notImplemented();
 
@@ -282,13 +303,16 @@ export class PreparedStatement<
   */
   async queryRow(
     args?: Array<Meta["BoundValue"]>,
-  ): Promise<Array<Meta["ResultValue"]>> {
-    return notImplemented();
+  ): Promise<Array<Meta["ResultValue"]> | undefined> {
+    for await (const row of this.query(args)) {
+      return [...row];
+    }
+    return undefined;
   }
 
   /**
   Executes the query with an optional array of bound values, without
-  returning any result rows. A `insertedRowId` and `affectedRowCount` value
+  returning any result rows. A `insertedRowId` and `affectedRows` value
   may be returned, but note that for some drivers these values may reflect
   a previous query if the executed one did not actually insert or affect any
   rows. (These should only be absent if the driver is certain that they're
@@ -299,10 +323,29 @@ export class PreparedStatement<
   async exec(
     args?: Array<Meta["BoundValue"]>,
   ): Promise<{
-    insertedRowId?: Meta["ResultValue"];
-    affectedRowCount?: number;
+    lastInsertedId?: Meta["ResultValue"];
+    affectedRows?: number;
   }> {
-    return notImplemented();
+    const result = this.query(args);
+    const lastInsertedId = this.driverConnection.lastInsertedId
+      ? await this.driverConnection.lastInsertedId()
+      : this.driverConnection.lastInsertedIdSync
+      ? this.driverConnection.lastInsertedIdSync()
+      : throwMissingImplementation("Connection.lastInsertedId[Sync]");
+    const affectedRows = this.driverConnection.affectedRows
+      ? await this.driverConnection.affectedRows()
+      : this.driverConnection.affectedRowsSync
+      ? this.driverConnection.affectedRowsSync()
+      : throwMissingImplementation("Connection.affectedRows[Sync]");
+
+    // This will release the operation lock, so it needs to come after we read
+    // the above stats for our query.
+    result.return(undefined);
+
+    return {
+      lastInsertedId,
+      affectedRows,
+    };
   }
 
   /**
@@ -315,5 +358,73 @@ export class PreparedStatement<
   */
   async dispose(): Promise<void> {
     return notImplemented();
+  }
+}
+
+export class ResultRows<
+  Meta extends driver.MetaBase,
+  Driver extends driver.Driver<Meta>,
+> implements AsyncIterable<Meta["ResultValue"]> {
+  constructor(
+    private driverRows: driver.ResultRows<Meta>,
+  ) {}
+
+  async close(): Promise<void> {
+    this.driverRows.close
+      ? (await this.driverRows.close())
+      : this.driverRows.closeSync?.();
+  }
+
+  private closedDeferred = async.deferred<void>();
+
+  [Symbol.asyncIterator](): AsyncIterator<ResultRow<Meta, Driver>, void> {
+    return {
+      next: async () => {
+        const driverRow = await this.driverRows.next?.() ??
+          this.driverRows.nextSync?.() ??
+          throwMissingImplementation("ResultRows.next[Sync]");
+        if (driverRow !== undefined) {
+          const row = new ResultRow<Meta, Driver>(driverRow);
+          return {
+            done: false,
+            value: row,
+          };
+        } else {
+          return {
+            done: true,
+            value: undefined,
+          };
+        }
+      },
+
+      return: async () => {
+        await this.close();
+        return {
+          done: true,
+          value: undefined,
+        };
+      },
+    };
+  }
+}
+
+export class ResultRow<
+  Meta extends driver.MetaBase,
+  Driver extends driver.Driver<Meta>,
+> implements Iterable<Meta["ResultValue"]> {
+  constructor(
+    private driverRow: driver.ResultRow<Meta>,
+  ) {}
+
+  toArray(): Array<Meta["ResultValue"]> {
+    return [...this];
+  }
+
+  [Symbol.iterator]() {
+    return this.driverRow[Symbol.iterator]();
+  }
+
+  get length() {
+    return this.driverRow.length;
   }
 }

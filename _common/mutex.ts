@@ -9,11 +9,6 @@ Errors unlock the mutex, they don't poison it.
 export class Mutex<Resource extends object = {}> {
   constructor(private resource: Resource) {}
 
-  /** A mutex without any associated value. */
-  static marker() {
-    return new Mutex<Record<never, never>>({});
-  }
-
   private poisonedError: undefined | Error;
 
   private queueTail: undefined | Promise<void>;
