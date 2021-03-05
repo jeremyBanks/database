@@ -375,8 +375,6 @@ export class ResultRows<
       : this.driverRows.closeSync?.();
   }
 
-  private closedDeferred = async.deferred<void>();
-
   [Symbol.asyncIterator](): AsyncIterator<ResultRow<Meta, Driver>, void> {
     return {
       next: async () => {
