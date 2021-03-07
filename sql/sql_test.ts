@@ -20,7 +20,11 @@ for (
     ],
     [
       "postgres: server",
-      () => sql.open<postgres.Meta>("", postgres),
+      () =>
+        sql.open<postgres.Meta>(
+          "postgres://postgres@localhost/postgres",
+          postgres,
+        ),
     ],
   ] as const
 ) {
