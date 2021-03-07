@@ -64,7 +64,7 @@ jobs:
             }
           ' "${version}"
 
-      - run: deno test --allow-read
+      - run: deno test --allow-read=. --allow-write=.
 
       - name: commit and push generated changes
         if: success() && steps.build.outputs.had-changes == 'true' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
