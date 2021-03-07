@@ -12,7 +12,7 @@ Deno.test("create, count, commit", async () => {
   await (await transaction.prepareStatement(`
     CREATE TABLE User (
       Id INTEGER PRIMARY KEY,
-      Name UNIQUE TEXT,
+      Name TEXT UNIQUE
     );
   `)).exec();
 
@@ -25,9 +25,9 @@ Deno.test("create, count, commit", async () => {
   await insertUserName.exec(["David"]);
 
   const selectUserCount = await transaction.prepareStatement(
-    "SELECT COUNT(*) FROM USER",
+    "SELECT COUNT(*) FROM User",
   );
-  const [count] = await selectUserCount.queryRow();
+  const [count] = (await selectUserCount.queryRow())!;
 
   asserts.assertEquals(count, 4);
 

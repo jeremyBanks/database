@@ -230,13 +230,13 @@ export interface ResultRows<Meta extends MetaBase = MetaBase> {
 
   May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   */
-  next(): Promise<ResultRow<Meta> | undefined>;
+  next?(): Promise<ResultRow<Meta> | undefined>;
   /**
   Reads the next row from a query result, or `undefined` if it's exhausted.
 
   May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   */
-  nextSync(): ResultRow<Meta> | undefined;
+  nextSync?(): ResultRow<Meta> | undefined;
 
   /**
   Close the the result handle, blocking until it is closed.

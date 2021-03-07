@@ -1,6 +1,5 @@
 // deno-lint-ignore-file require-await require-yield
 
-import { notImplemented } from "../_common/assertions.ts";
 import { Context } from "../_common/context.ts";
 import { async } from "../_common/deps.ts";
 import { Mutex } from "../_common/mutex.ts";
@@ -326,18 +325,27 @@ export class PreparedStatement<
 
   May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   */
-  async *query(
-    args?: Array<Meta["BoundValue"]>,
-  ): AsyncGenerator<Iterable<Meta["ResultValue"]>> {
+  async query(
+    args: Array<Meta["BoundValue"]> = [],
+  ): Promise<ResultRows<Meta, Driver>> {
     this.context.throwIfDone();
+
     const handle = await this.operationLock.lock();
 
-    notImplemented();
+    const driverParent = this.driverTransaction ?? this.driverConnection;
 
-    // TODO: how to ensure this gets invoked if the iterator is closed early
-    // TODO: with .return()? I don't think we can using just the generator
-    // TODO: interface, we need to implement more.
-    handle.release();
+    const result = await doQuery(
+      this.context,
+      this.driverConnection,
+      driverParent,
+      this.sqlString,
+      args,
+      "read",
+    );
+
+    result.context.done().then(() => handle.release());
+
+    return result;
   }
 
   /**
@@ -347,13 +355,15 @@ export class PreparedStatement<
   May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   */
   async queryRow(
-    args?: Array<Meta["BoundValue"]>,
+    args: Array<Meta["BoundValue"]> = [],
   ): Promise<Array<Meta["ResultValue"]> | undefined> {
-    this.context.throwIfDone();
-    for await (const row of this.query(args)) {
+    const rows = await this.query(args);
+
+    for await (const row of rows) {
       this.context.throwIfDone();
       return [...row];
     }
+
     this.context.throwIfDone();
     return undefined;
   }
@@ -369,32 +379,24 @@ export class PreparedStatement<
   May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   */
   async exec(
-    args?: Array<Meta["BoundValue"]>,
-  ): Promise<{
-    lastInsertedId?: Meta["ResultValue"];
-    affectedRows?: number;
-  }> {
+    args: Array<Meta["BoundValue"]> = [],
+  ): Promise<ResultChanges<Meta, Driver>> {
     this.context.throwIfDone();
-    const result = this.query(args);
-    const lastInsertedId = this.driverConnection.lastInsertedId
-      ? await this.context.cancelling(this.driverConnection.lastInsertedId())
-      : this.driverConnection.lastInsertedIdSync
-      ? this.driverConnection.lastInsertedIdSync()
-      : throwMissingImplementation("Connection.lastInsertedId[Sync]");
-    const affectedRows = this.driverConnection.affectedRows
-      ? await this.context.cancelling(this.driverConnection.affectedRows())
-      : this.driverConnection.affectedRowsSync
-      ? this.driverConnection.affectedRowsSync()
-      : throwMissingImplementation("Connection.affectedRows[Sync]");
 
-    // This will release the operation lock, so it needs to come after we read
-    // the above stats for our query.
-    result.return(undefined);
+    return await this.operationLock.use(async () => {
+      this.context.throwIfDone();
 
-    return {
-      lastInsertedId,
-      affectedRows,
-    };
+      const driverParent = this.driverTransaction ?? this.driverConnection;
+
+      return doQuery(
+        this.context,
+        this.driverConnection,
+        driverParent,
+        this.sqlString,
+        args,
+        "write",
+      );
+    });
   }
 
   /**
@@ -442,7 +444,7 @@ export class ResultRows<
           this.driverRows.nextSync?.() ??
           throwMissingImplementation("ResultRows.next[Sync]");
         if (driverRow !== undefined) {
-          const row = new ResultRow<Meta, Driver>(driverRow);
+          const row = new ResultRow<Meta, Driver>(driverRow, this.context);
           return {
             done: false,
             value: row,
@@ -468,6 +470,27 @@ export class ResultRows<
   }
 }
 
+/**
+Query result of changes made to the database.
+
+These may be stale (reflecting the results of a previous query) if the
+associated query was not of a type to make changes. These may be undefined if
+the driver doesn't support these, or if it knows that they weren't relevant to
+the associated query.
+*/
+export class ResultChanges<
+  Meta extends driver.MetaBase,
+  Driver extends driver.Driver<Meta>,
+> {
+  constructor(
+    readonly lastInsertedId?: Meta["ResultValue"],
+    readonly affectedRows?: number,
+  ) {}
+}
+
+/**
+Query result rows.
+*/
 export class ResultRow<
   Meta extends driver.MetaBase,
   Driver extends driver.Driver<Meta>,
@@ -495,5 +518,65 @@ export class ResultRow<
   get length() {
     this.context.throwIfDone();
     return this.driverRow.length;
+  }
+}
+
+async function doQuery<
+  Meta extends driver.MetaBase,
+  Driver extends driver.Driver<Meta>,
+  DriverParent extends driver.Connection<Meta> | driver.Transaction<Meta>,
+>(
+  context: Context,
+  driverConnection: driver.Connection<Meta>,
+  driverParent: DriverParent,
+  sqlString: string,
+  args: Array<Meta["BoundValue"]>,
+  type: "read",
+): Promise<ResultRows<Meta, Driver>>;
+async function doQuery<
+  Meta extends driver.MetaBase,
+  Driver extends driver.Driver<Meta>,
+  DriverParent extends driver.Connection<Meta> | driver.Transaction<Meta>,
+>(
+  context: Context,
+  driverConnection: driver.Connection<Meta>,
+  driverParent: DriverParent,
+  sqlString: string,
+  args: Array<Meta["BoundValue"]>,
+  type: "write",
+): Promise<ResultChanges<Meta, Driver>>;
+async function doQuery<
+  Meta extends driver.MetaBase,
+  Driver extends driver.Driver<Meta>,
+  DriverParent extends driver.Connection<Meta> | driver.Transaction<Meta>,
+>(
+  context: Context,
+  driverConnection: driver.Connection<Meta>,
+  driverParent: DriverParent,
+  sqlString: string,
+  args: Array<Meta["BoundValue"]>,
+  type: "read" | "write",
+) {
+  context.throwIfDone();
+
+  const driverRows = driverParent.query
+    ? await context.cancelling(driverParent.query(sqlString, args))
+    : driverParent.querySync?.(sqlString, args) ?? throwMissingImplementation();
+
+  if (type === "read") {
+    return new ResultRows(driverRows, context);
+  } else {
+    const lastInsertedId = driverConnection.lastInsertedId
+      ? await context.cancelling(driverConnection.lastInsertedId())
+      : driverConnection.lastInsertedIdSync
+      ? driverConnection.lastInsertedIdSync()
+      : throwMissingImplementation("Connection.lastInsertedId[Sync]");
+    const affectedRows = driverConnection.affectedRows
+      ? await context.cancelling(driverConnection.affectedRows())
+      : driverConnection.affectedRowsSync
+      ? driverConnection.affectedRowsSync()
+      : throwMissingImplementation("Connection.affectedRows[Sync]");
+
+    return new ResultChanges(lastInsertedId, affectedRows);
   }
 }

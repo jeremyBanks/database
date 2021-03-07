@@ -1,6 +1,7 @@
 import * as sqlite from "https://deno.land/x/sqlite@v2.3.2/mod.ts";
 
 import * as driver from "../sql/driver.ts";
+import { log } from "../_common/deps.ts";
 
 export type ResultValue =
   | null
@@ -42,7 +43,7 @@ export class Connection implements driver.Connection<Meta> {
     query: string,
     args: Array<BoundValue>,
   ) {
-    return this.innerConnection.query(query, args);
+    return new ResultRows(this.innerConnection.query(query, args));
   }
 
   startTransactionSync() {
@@ -74,7 +75,7 @@ export class Transaction implements driver.Transaction<Meta> {
     query: string,
     args: Array<BoundValue>,
   ) {
-    return this.innerConnection.query(query, args);
+    return new ResultRows(this.innerConnection.query(query, args));
   }
 
   startTransactionSync() {
@@ -100,5 +101,17 @@ export class Transaction implements driver.Transaction<Meta> {
       this.innerConnection.query(`ROLLBACK TO TRANSACTION_${this.depth}`)
         .return();
     }
+  }
+}
+
+export class ResultRows implements driver.ResultRows<Meta> {
+  constructor(private innerRows: Iterator<Array<Meta["ResultValue"]>>) {}
+
+  nextSync() {
+    return this.innerRows.next().value;
+  }
+
+  closeSync() {
+    this.innerRows.return?.();
   }
 }
