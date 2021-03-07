@@ -1,6 +1,7 @@
 // deno-lint-ignore-file require-await require-yield
 
 import { notImplemented } from "../_common/assertions.ts";
+import { Context } from "../_common/context.ts";
 import { async } from "../_common/deps.ts";
 import { Mutex } from "../_common/mutex.ts";
 
@@ -37,9 +38,15 @@ export class Database<
   Meta extends driver.MetaBase,
   Driver extends driver.Driver<Meta>,
 > {
+  readonly context: Context;
+  private contextCloser: () => void;
+
   constructor(
     private driverConnector: driver.Connector<Meta>,
-  ) {}
+    context: Context = Context.Background,
+  ) {
+    [this.context, this.contextCloser] = context.withCancel();
+  }
 
   /**
   Opens a new open connection to the database.
@@ -47,15 +54,24 @@ export class Database<
   May throw DatabaseConnectivityError or DatabaseEngineError.
   */
   async connect(): Promise<Connection<Meta, Driver>> {
+    this.context.throwIfDone();
+
     const driverConnection = await this.driverConnector.connect?.() ??
       this.driverConnector.connectSync?.() ??
       throwMissingImplementation("Connector.connect[Sync]");
 
+    this.context.throwIfDone();
+
     const connection = new Connection<Meta, Driver>(
       driverConnection,
+      this.context,
     );
 
     return connection;
+  }
+
+  dispose() {
+    this.contextCloser();
   }
 }
 
@@ -63,9 +79,15 @@ export class Connection<
   Meta extends driver.MetaBase,
   Driver extends driver.Driver<Meta>,
 > {
+  readonly context: Context;
+  private contextCloser: () => void;
+
   constructor(
     private driverConnection: driver.Connection<Meta>,
-  ) {}
+    context: Context,
+  ) {
+    [this.context, this.contextCloser] = context.withCancel();
+  }
 
   /**
   Lock that must be held by the currently-open child transaction or operation.
@@ -93,6 +115,7 @@ export class Connection<
         transaction = new Transaction(
           this.driverConnection,
           driverTransaction,
+          this.context,
         );
       } catch (error) {
         result.reject(error);
@@ -115,28 +138,29 @@ export class Connection<
   async prepareStatement(
     sqlString: string,
   ): Promise<PreparedStatement<Meta, Driver>> {
+    this.context.throwIfDone();
     return new PreparedStatement(
       this.driverConnection,
       undefined,
       this.operationLock,
       sqlString,
+      this.context,
     );
   }
 
   /**
-  Closes the connection. If there is an active transaction, this will block
-  until it is closed.
+  Closes the connection.
 
   Will not typically throw.
   */
   async close(): Promise<void> {
-    await this.operationLock.dispose();
-
     this.driverConnection.close
       ? (await this.driverConnection.close())
       : this.driverConnection.closeSync?.();
 
-    this.closedDeferred.resolve();
+    this.contextCloser();
+
+    await this.operationLock.dispose();
   }
 
   /**
@@ -145,20 +169,24 @@ export class Connection<
   Will not typically throw.
   */
   async closed(): Promise<void> {
-    return this.closedDeferred;
+    await this.context.done();
   }
-
-  private closedDeferred = async.deferred<void>();
 }
 
 export class Transaction<
   Meta extends driver.MetaBase,
   Driver extends driver.Driver<Meta>,
 > {
+  readonly context: Context;
+  private contextCloser: () => void;
+
   constructor(
     private driverConnection: driver.Connection<Meta>,
     private driverTransaction: driver.Transaction<Meta>,
-  ) {}
+    context: Context,
+  ) {
+    [this.context, this.contextCloser] = context.withCancel();
+  }
 
   /**
   Lock that must be held by the currently-open child transaction or operation.
@@ -175,9 +203,14 @@ export class Transaction<
   May throw DatabaseConnectivityError or DatabaseEngineError.
   */
   async startTransaction(): Promise<Transaction<Meta, Driver>> {
+    this.context.throwIfDone();
+
     const result = async.deferred<Transaction<Meta, Driver>>();
     this.operationLock.use(async () => {
       // Don't start the transaction until we acquire the transitionLock.
+
+      this.context.throwIfDone();
+
       let transaction;
       try {
         const driverTransaction =
@@ -188,6 +221,7 @@ export class Transaction<
         transaction = new Transaction(
           this.driverConnection,
           driverTransaction,
+          this.context,
         );
       } catch (error) {
         result.reject(error);
@@ -214,6 +248,7 @@ export class Transaction<
       this.driverTransaction,
       this.operationLock,
       sqlString,
+      this.context,
     );
   }
 
@@ -224,8 +259,10 @@ export class Transaction<
   May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   */
   async commit(): Promise<void> {
+    this.context.throwIfDone();
+
     this.driverTransaction.commit
-      ? await this.driverTransaction.commit()
+      ? await this.context.cancelling(this.driverTransaction.commit())
       : this.driverTransaction.commitSync
       ? this.driverTransaction.commitSync()
       : throwMissingImplementation("Transaction.commit[Sync]");
@@ -239,8 +276,10 @@ export class Transaction<
   May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   */
   async rollback(): Promise<void> {
+    this.context.throwIfDone();
+
     this.driverTransaction.rollback
-      ? await this.driverTransaction.rollback()
+      ? await this.context.cancelling(this.driverTransaction.rollback())
       : this.driverTransaction.rollbackSync
       ? this.driverTransaction.rollbackSync()
       : throwMissingImplementation("Transaction.rollback[Sync]");
@@ -265,13 +304,18 @@ export class PreparedStatement<
 > {
   // Shim implementation, we don't actually use the driver's prepare statement
   // API directly at this time.
+  readonly context: Context;
+  private contextCloser: () => void;
 
   constructor(
     private driverConnection: driver.Connection<Meta>,
     private driverTransaction: driver.Transaction<Meta> | undefined,
     private operationLock: Mutex<Record<never, never>>,
     private sqlString: string,
-  ) {}
+    context: Context,
+  ) {
+    [this.context, this.contextCloser] = context.withCancel();
+  }
 
   /**
   Executes the query with an optional array of bound values, and
@@ -285,6 +329,7 @@ export class PreparedStatement<
   async *query(
     args?: Array<Meta["BoundValue"]>,
   ): AsyncGenerator<Iterable<Meta["ResultValue"]>> {
+    this.context.throwIfDone();
     const handle = await this.operationLock.lock();
 
     notImplemented();
@@ -304,9 +349,12 @@ export class PreparedStatement<
   async queryRow(
     args?: Array<Meta["BoundValue"]>,
   ): Promise<Array<Meta["ResultValue"]> | undefined> {
+    this.context.throwIfDone();
     for await (const row of this.query(args)) {
+      this.context.throwIfDone();
       return [...row];
     }
+    this.context.throwIfDone();
     return undefined;
   }
 
@@ -326,14 +374,15 @@ export class PreparedStatement<
     lastInsertedId?: Meta["ResultValue"];
     affectedRows?: number;
   }> {
+    this.context.throwIfDone();
     const result = this.query(args);
     const lastInsertedId = this.driverConnection.lastInsertedId
-      ? await this.driverConnection.lastInsertedId()
+      ? await this.context.cancelling(this.driverConnection.lastInsertedId())
       : this.driverConnection.lastInsertedIdSync
       ? this.driverConnection.lastInsertedIdSync()
       : throwMissingImplementation("Connection.lastInsertedId[Sync]");
     const affectedRows = this.driverConnection.affectedRows
-      ? await this.driverConnection.affectedRows()
+      ? await this.context.cancelling(this.driverConnection.affectedRows())
       : this.driverConnection.affectedRowsSync
       ? this.driverConnection.affectedRowsSync()
       : throwMissingImplementation("Connection.affectedRows[Sync]");
@@ -357,7 +406,7 @@ export class PreparedStatement<
   Will not typically throw.
   */
   async dispose(): Promise<void> {
-    return notImplemented();
+    this.contextCloser();
   }
 }
 
@@ -365,19 +414,30 @@ export class ResultRows<
   Meta extends driver.MetaBase,
   Driver extends driver.Driver<Meta>,
 > implements AsyncIterable<Meta["ResultValue"]> {
+  readonly context: Context;
+  private contextCloser: () => void;
+
   constructor(
     private driverRows: driver.ResultRows<Meta>,
-  ) {}
+    context: Context,
+  ) {
+    [this.context, this.contextCloser] = context.withCancel();
+  }
 
   async close(): Promise<void> {
     this.driverRows.close
       ? (await this.driverRows.close())
       : this.driverRows.closeSync?.();
+
+    this.contextCloser();
   }
 
   [Symbol.asyncIterator](): AsyncIterator<ResultRow<Meta, Driver>, void> {
+    this.context.throwIfDone();
     return {
       next: async () => {
+        this.context.throwIfDone();
+
         const driverRow = await this.driverRows.next?.() ??
           this.driverRows.nextSync?.() ??
           throwMissingImplementation("ResultRows.next[Sync]");
@@ -396,6 +456,8 @@ export class ResultRows<
       },
 
       return: async () => {
+        this.context.throwIfDone();
+
         await this.close();
         return {
           done: true,
@@ -410,19 +472,28 @@ export class ResultRow<
   Meta extends driver.MetaBase,
   Driver extends driver.Driver<Meta>,
 > implements Iterable<Meta["ResultValue"]> {
+  readonly context: Context;
+  private contextCloser: () => void;
+
   constructor(
     private driverRow: driver.ResultRow<Meta>,
-  ) {}
+    context: Context,
+  ) {
+    [this.context, this.contextCloser] = context.withCancel();
+  }
 
   toArray(): Array<Meta["ResultValue"]> {
+    this.context.throwIfDone();
     return [...this];
   }
 
   [Symbol.iterator]() {
+    this.context.throwIfDone();
     return this.driverRow[Symbol.iterator]();
   }
 
   get length() {
+    this.context.throwIfDone();
     return this.driverRow.length;
   }
 }

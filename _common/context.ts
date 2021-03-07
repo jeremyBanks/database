@@ -22,11 +22,14 @@ export class Context {
   }
 
   private doneReason: Promise<ContextDoneReason>;
+  private doneReasonSync: ContextDoneReason | undefined = undefined;
   private constructor(
     private label: string,
     signals: Array<Promise<ContextDoneReason>> = [],
   ) {
     this.doneReason = Promise.race(signals);
+
+    this.doneReason.then((reason) => this.doneReasonSync = reason);
   }
 
   async done(): Promise<ContextDoneReason> {
@@ -37,8 +40,20 @@ export class Context {
     throw new ContextDoneError(await this.doneReason);
   }
 
-  /** Wraps a promise so that it will be rejected if this context is cancelled. */
-  async cancelling<T>(p: Promise<T>): Promise<T> {
+  throwIfDone(): void {
+    if (this.doneReasonSync) {
+      throw new ContextDoneError(this.doneReasonSync);
+    }
+  }
+
+  /**
+  Wraps a promise so that it will be rejected if it's still pending when this
+  context is done.
+  */
+  async cancelling<T>(p: Promise<T> | (() => Promise<T>)): Promise<T> {
+    if (typeof p === "function") {
+      p = p();
+    }
     return await Promise.race([p, this.error()]);
   }
 
