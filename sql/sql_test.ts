@@ -1,17 +1,34 @@
 import { asserts } from "../_common/deps.ts";
+import { as, assertStatic } from "../_common/typing.ts";
+import { ThenType } from "../_common/_typing/shopify.ts";
 
 import * as sqlite from "../x/sqlite.ts";
 import * as postgres from "../x/postgres.ts";
 
 import * as sql from "./sql.ts";
+import * as driver from "./driver.ts";
 
 for (
   const [name, openConnector] of [
-    ["sqlite: memory", () => sql.open(":memory:", sqlite)],
-    ["sqlite: filesystem", () => sql.open(".test.sqlite.tmp", sqlite)],
-    ["postgres: server", () => sql.open("", postgres)],
+    [
+      "sqlite: memory",
+      () => sql.open<sqlite.Meta, sqlite.Driver>(":memory:", sqlite),
+    ],
+    [
+      "sqlite: filesystem",
+      () => sql.open<sqlite.Meta, sqlite.Driver>(".test.sqlite.tmp", sqlite),
+    ],
+    [
+      "postgres: server",
+      () => sql.open<postgres.Meta, postgres.Driver>("", postgres),
+    ],
   ] as const
 ) {
+  assertStatic as as.StrictlyExtends<
+    ThenType<ReturnType<typeof openConnector>>,
+    sql.Database<driver.MetaBase, driver.Driver<driver.MetaBase>>
+  >;
+
   Deno.test(`${name}: create, count, commit`, async () => {
     const connector = await openConnector();
     const connection = await connector.connect();
