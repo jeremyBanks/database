@@ -25,6 +25,8 @@ ENV PGDATA="/usr/local/pgsql/data"
 
 RUN initdb && \
     pg_ctl start && \
-    createuser -s vscode
+    createuser -s codespace && \
+    createdb codespace && \
+    pg_ctl stop
 
 USER codespace
