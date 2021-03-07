@@ -12,23 +12,18 @@ for (
   const [name, openConnector] of [
     [
       "sqlite: memory",
-      () => sql.open<sqlite.Meta, sqlite.Driver>(":memory:", sqlite),
+      () => sql.open<sqlite.Meta>(":memory:", sqlite),
     ],
     [
       "sqlite: filesystem",
-      () => sql.open<sqlite.Meta, sqlite.Driver>(".test.sqlite.tmp", sqlite),
+      () => sql.open<sqlite.Meta>(".test.sqlite.tmp", sqlite),
     ],
     [
       "postgres: server",
-      () => sql.open<postgres.Meta, postgres.Driver>("", postgres),
+      () => sql.open<postgres.Meta>("", postgres),
     ],
   ] as const
 ) {
-  assertStatic as as.StrictlyExtends<
-    ThenType<ReturnType<typeof openConnector>>,
-    sql.Database<driver.MetaBase, driver.Driver<driver.MetaBase>>
-  >;
-
   Deno.test(`${name}: create, count, commit`, async () => {
     const connector = await openConnector();
     const connection = await connector.connect();

@@ -1,4 +1,4 @@
-// deno-lint-ignore-file require-await require-yield
+// deno-lint-ignore-file require-await
 
 import { Context } from "../_common/context.ts";
 import { async } from "../_common/deps.ts";
@@ -18,14 +18,15 @@ Creates a database handle/connector with the given driver and path. May
 validate the arguments (path), but will not open a connection yet.
 
 May throw `DatabaseConnectorValidationError` if the path is invalid.
+
+Ahhhrggg type inference is confusing me, specify Meta explicitly for now please.
 */
 export const open = async <
   Meta extends driver.MetaBase,
-  Driver extends driver.Driver<Meta>,
 >(
   path: string,
-  driverModule: { driver: Driver },
-): Promise<Database<Meta, Driver>> => {
+  driverModule: driver.Module<Meta>,
+): Promise<Database<Meta>> => {
   const driver = driverModule.driver;
   const connector = await driver.openConnector?.(path) ??
     driver.openConnectorSync?.(path) ??
@@ -35,7 +36,6 @@ export const open = async <
 
 export class Database<
   Meta extends driver.MetaBase,
-  Driver extends driver.Driver<Meta>,
 > {
   readonly context: Context;
   private contextCloser: () => void;
@@ -52,7 +52,7 @@ export class Database<
 
   May throw DatabaseConnectivityError or DatabaseEngineError.
   */
-  async connect(): Promise<Connection<Meta, Driver>> {
+  async connect(): Promise<Connection<Meta>> {
     this.context.throwIfDone();
 
     const driverConnection = await this.driverConnector.connect?.() ??
@@ -61,7 +61,7 @@ export class Database<
 
     this.context.throwIfDone();
 
-    const connection = new Connection<Meta, Driver>(
+    const connection = new Connection<Meta>(
       driverConnection,
       this.context,
     );
@@ -76,7 +76,6 @@ export class Database<
 
 export class Connection<
   Meta extends driver.MetaBase,
-  Driver extends driver.Driver<Meta>,
 > {
   readonly context: Context;
   private contextCloser: () => void;
@@ -100,8 +99,8 @@ export class Connection<
 
   May throw `DatabaseConnectivityError` or `DatabaseEngineError`.
   */
-  async startTransaction(): Promise<Transaction<Meta, Driver>> {
-    const result = async.deferred<Transaction<Meta, Driver>>();
+  async startTransaction(): Promise<Transaction<Meta>> {
+    const result = async.deferred<Transaction<Meta>>();
     this.operationLock.use(async () => {
       // Don't start the transaction until we acquire the transitionLock.
       let transaction;
@@ -136,7 +135,7 @@ export class Connection<
   */
   async prepareStatement(
     sqlString: string,
-  ): Promise<PreparedStatement<Meta, Driver>> {
+  ): Promise<PreparedStatement<Meta>> {
     this.context.throwIfDone();
     return new PreparedStatement(
       this.driverConnection,
@@ -174,7 +173,6 @@ export class Connection<
 
 export class Transaction<
   Meta extends driver.MetaBase,
-  Driver extends driver.Driver<Meta>,
 > {
   readonly context: Context;
   private contextCloser: () => void;
@@ -201,10 +199,10 @@ export class Transaction<
 
   May throw DatabaseConnectivityError or DatabaseEngineError.
   */
-  async startTransaction(): Promise<Transaction<Meta, Driver>> {
+  async startTransaction(): Promise<Transaction<Meta>> {
     this.context.throwIfDone();
 
-    const result = async.deferred<Transaction<Meta, Driver>>();
+    const result = async.deferred<Transaction<Meta>>();
     this.operationLock.use(async () => {
       // Don't start the transaction until we acquire the transitionLock.
 
@@ -241,7 +239,7 @@ export class Transaction<
   */
   async prepareStatement(
     sqlString: string,
-  ): Promise<PreparedStatement<Meta, Driver>> {
+  ): Promise<PreparedStatement<Meta>> {
     return new PreparedStatement(
       this.driverConnection,
       this.driverTransaction,
@@ -299,7 +297,6 @@ export class Transaction<
 
 export class PreparedStatement<
   Meta extends driver.MetaBase,
-  Driver extends driver.Driver<Meta>,
 > {
   // Shim implementation, we don't actually use the driver's prepare statement
   // API directly at this time.
@@ -327,7 +324,7 @@ export class PreparedStatement<
   */
   async query(
     args: Array<Meta["BoundValue"]> = [],
-  ): Promise<ResultRows<Meta, Driver>> {
+  ): Promise<ResultRows<Meta>> {
     this.context.throwIfDone();
 
     const handle = await this.operationLock.lock();
@@ -380,7 +377,7 @@ export class PreparedStatement<
   */
   async exec(
     args: Array<Meta["BoundValue"]> = [],
-  ): Promise<ResultChanges<Meta, Driver>> {
+  ): Promise<ResultChanges<Meta>> {
     this.context.throwIfDone();
 
     return await this.operationLock.use(async () => {
@@ -414,7 +411,6 @@ export class PreparedStatement<
 
 export class ResultRows<
   Meta extends driver.MetaBase,
-  Driver extends driver.Driver<Meta>,
 > implements AsyncIterable<Meta["ResultValue"]> {
   readonly context: Context;
   private contextCloser: () => void;
@@ -434,7 +430,7 @@ export class ResultRows<
     this.contextCloser();
   }
 
-  [Symbol.asyncIterator](): AsyncIterator<ResultRow<Meta, Driver>, void> {
+  [Symbol.asyncIterator](): AsyncIterator<ResultRow<Meta>, void> {
     this.context.throwIfDone();
     return {
       next: async () => {
@@ -444,7 +440,7 @@ export class ResultRows<
           this.driverRows.nextSync?.() ??
           throwMissingImplementation("ResultRows.next[Sync]");
         if (driverRow !== undefined) {
-          const row = new ResultRow<Meta, Driver>(driverRow, this.context);
+          const row = new ResultRow<Meta>(driverRow, this.context);
           return {
             done: false,
             value: row,
@@ -480,7 +476,6 @@ the associated query.
 */
 export class ResultChanges<
   Meta extends driver.MetaBase,
-  Driver extends driver.Driver<Meta>,
 > {
   constructor(
     readonly lastInsertedId?: Meta["ResultValue"],
@@ -493,7 +488,6 @@ Query result rows.
 */
 export class ResultRow<
   Meta extends driver.MetaBase,
-  Driver extends driver.Driver<Meta>,
 > implements Iterable<Meta["ResultValue"]> {
   readonly context: Context;
   private contextCloser: () => void;
@@ -523,7 +517,6 @@ export class ResultRow<
 
 async function doQuery<
   Meta extends driver.MetaBase,
-  Driver extends driver.Driver<Meta>,
   DriverParent extends driver.Connection<Meta> | driver.Transaction<Meta>,
 >(
   context: Context,
@@ -532,10 +525,9 @@ async function doQuery<
   sqlString: string,
   args: Array<Meta["BoundValue"]>,
   type: "read",
-): Promise<ResultRows<Meta, Driver>>;
+): Promise<ResultRows<Meta>>;
 async function doQuery<
   Meta extends driver.MetaBase,
-  Driver extends driver.Driver<Meta>,
   DriverParent extends driver.Connection<Meta> | driver.Transaction<Meta>,
 >(
   context: Context,
@@ -544,10 +536,9 @@ async function doQuery<
   sqlString: string,
   args: Array<Meta["BoundValue"]>,
   type: "write",
-): Promise<ResultChanges<Meta, Driver>>;
+): Promise<ResultChanges<Meta>>;
 async function doQuery<
   Meta extends driver.MetaBase,
-  Driver extends driver.Driver<Meta>,
   DriverParent extends driver.Connection<Meta> | driver.Transaction<Meta>,
 >(
   context: Context,
