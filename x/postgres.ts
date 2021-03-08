@@ -31,20 +31,20 @@ export class Connector implements driver.Connector<Meta> {
   constructor(private readonly path: string) {}
 
   async connect() {
-    const innerConnection = new postgres.Client(this.path);
-    await innerConnection.connect();
-    return new Connection(innerConnection);
+    const innerClient = new postgres.Client(this.path);
+    await innerClient.connect();
+    return new Connection(innerClient);
   }
 }
 
 export class Connection implements driver.Connection<Meta> {
-  constructor(private readonly innerConnection: postgres.Client) {}
+  constructor(private readonly innerClient: postgres.Client) {}
 
   async query(
     sqlString: string,
     args: Array<BoundValue>,
   ) {
-    const result = await this.innerConnection.queryArray<ResultValue[]>(
+    const result = await this.innerClient.queryArray<ResultValue[]>(
       sqlString,
       ...args,
     );
@@ -53,7 +53,7 @@ export class Connection implements driver.Connection<Meta> {
   }
 
   async close() {
-    await this.innerConnection.end();
+    await this.innerClient.end();
   }
 }
 

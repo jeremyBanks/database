@@ -4,6 +4,7 @@ import { ThenType } from "../_common/_typing/shopify.ts";
 
 import * as sqlite from "../x/sqlite.ts";
 import * as postgres from "../x/postgres.ts";
+import * as mysql from "../x/mysql.ts";
 
 import * as sql from "./sql.ts";
 import * as driver from "./driver.ts";
@@ -24,6 +25,14 @@ for (
         sql.open<postgres.Meta>(
           "postgres://postgres@localhost/postgres",
           postgres,
+        ),
+    ],
+    [
+      "mysql: server",
+      () =>
+        sql.open<mysql.Meta>(
+          "mysql://mysql@localhost/mysql",
+          mysql,
         ),
     ],
   ] as const

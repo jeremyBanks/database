@@ -1,7 +1,6 @@
 import * as sqlite from "https://deno.land/x/sqlite@v2.3.2/mod.ts";
 
 import * as driver from "../sql/driver.ts";
-import { log } from "../_common/deps.ts";
 
 export type ResultValue =
   | null
