@@ -1,0 +1,92 @@
+{
+  "dockerFile": "Dockerfile",
+  "extensions": [
+    "akamud.vscode-theme-onelight",
+    "bierner.github-markdown-preview",
+    "denoland.vscode-deno",
+    "eamodio.gitlens",
+    "ms-vscode.theme-1337",
+    "tyriar.sort-lines"
+  ],
+  "settings": {
+    "deno.codeLens.implementations": true,
+    "deno.codeLens.references": true,
+    "deno.import_intellisense_origins": {
+      "https://deno.land": true
+    },
+    "editor.codeLens": true,
+    "[javascript]": {
+      "editor.defaultFormatter": "denoland.vscode-deno"
+    },
+    "[typescript]": {
+      "editor.defaultFormatter": "denoland.vscode-deno"
+    },
+    "[markdown]": {
+      "editor.defaultFormatter": "denoland.vscode-deno"
+    },
+    "[javascriptreact]": {
+      "editor.defaultFormatter": "denoland.vscode-deno"
+    },
+    "[typescriptreact]": {
+      "editor.defaultFormatter": "denoland.vscode-deno"
+    },
+    "editor.tokenColorCustomizations": {
+      "textMateRules": [
+        {
+          "scope": "punctuation.definition.comment",
+          "settings": {
+            "foreground": "#0A44",
+            "fontStyle": "bold"
+          }
+        },
+        {
+          "scope": "comment",
+          "settings": {
+            "fontStyle": ""
+          }
+        }
+      ],
+      "[1337]": {
+        "textMateRules": [
+          {
+            "scope": "comment",
+            "settings": {
+              "foreground": "#FFF"
+            }
+          }
+        ]
+      },
+      "[Atom One Light]": {
+        "textMateRules": [
+          {
+            "scope": "comment",
+            "settings": {
+              "foreground": "#000"
+            }
+          }
+        ]
+      }
+    },
+    "editor.tabSize": 2,
+    "editor.formatOnSave": true,
+    "editor.minimap.maxColumn": 80,
+    "editor.minimap.showSlider": "always",
+    "editor.minimap.size": "fit",
+    "editor.renderWhitespace": "trailing",
+    "editor.rulers": [
+      80
+    ],
+    "editor.wordWrap": "on",
+    "editor.wrappingIndent": "indent",
+    "explorer.sortOrder": "filesFirst",
+    "files.autoSave": "onFocusChange",
+    "files.exclude": {
+      ".devcontainer": true,
+      ".github": true,
+      ".vscode": true
+    },
+    "files.insertFinalNewline": true,
+    "git.autofetch": true,
+    "terminal.integrated.shell.linux": "/bin/zsh"
+  }
+}

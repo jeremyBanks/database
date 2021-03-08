@@ -1,0 +1,60 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: cache deno installation and deno.land dependencies
+        uses: actions/cache@v2
+        with:
+          key: ${{ runner.os }}-deno-${{ hashFiles('**/*') }}
+          restore-keys: ${{ runner.os }}-deno-
+          path: |
+            /home/runner/.deno
+            /home/runner/.cache/deno/deps/https/deno.land
+
+      - name: install or update deno installation
+        run: |
+          export DENO_INSTALL="/home/runner/.deno"
+          export PATH="${DENO_INSTALL}/bin:${PATH}"
+          mkdir -p "${DENO_INSTALL}"
+          deno upgrade || (
+            curl -fsSL https://deno.land/x/install/install.sh > "${DENO_INSTALL}/.sh";
+            sh "${DENO_INSTALL}/.sh"
+          )
+          deno upgrade
+          deno --version
+          deno info
+          echo "DENO_INSTALL=${DENO_INSTALL}" >> "${GITHUB_ENV}"
+          echo "PATH=${PATH}" >> "${GITHUB_ENV}"
+
+      - name: tag release using ./VERSION and merge it into trunk
+        run: |
+          declare br="
+          "
+          declare version="$(eval "echo $(cat ./VERSION)")"
+          deno eval '
+            import * as semver from "https://deno.land/x/semver@v1.0.0/mod.ts";
+            const [version] = Deno.args;
+            if (semver.valid(version)) {
+              console.log(`version is valid: ${version}`);
+            } else {
+              console.log(`version is NOT valid: ${version}`);
+              Deno.exit(1);
+            }
+          ' "${version}"
+
+          declare branch="$(echo ${GITHUB_REF#refs/heads/})"
+          git checkout "${branch}"
+          git remote rm origin
+          git remote add origin "https://${GITHUB_ACTOR}:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch origin --tags --unshallow
+          git tag "${version}"
+          git push origin "${branch}":trunk
+          git push origin "${version}":"${version}"
