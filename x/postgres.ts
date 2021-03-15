@@ -52,6 +52,12 @@ export class Connection implements driver.Connection<Meta> {
     return new ResultRows(rowIterator);
   }
 
+  // startTransaction() {
+  //   this.innerClient.query("BEGIN DEFERRED TRANSACTION").return();
+  //   const transaction = new Transaction(this.innerClient);
+  //   return transaction;
+  // }
+
   async close() {
     await this.innerClient.end();
   }

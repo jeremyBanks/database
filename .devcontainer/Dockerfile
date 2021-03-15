@@ -12,7 +12,8 @@ ENV PATH="${PATH}:${DENO_INSTALL}/bin:/usr/lib/postgresql/12/bin"
 ENV PGDATA="/usr/local/pgsql/data"
 
 RUN apt-get update && \
-    apt-get -y install postgresql-12 postgresql-client-12 && \
+    apt-get -y install postgresql-12 postgresql-client-12\
+                       mysql-8.0     mysql-client-8.0 && \
     mkdir -p /usr/local/pgsql/data && \
     chown -R postgres /usr/local/pgsql
 

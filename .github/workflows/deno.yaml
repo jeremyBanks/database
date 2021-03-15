@@ -56,8 +56,9 @@ jobs:
           ' "${version}"
 
       - run: |
-          deno test --allow-read=. --allow-write=. --lock=lock.json --lock-write
+          deno test --unstable --allow-read=. --allow-write=. --lock=lock.json --lock-write --coverage=cov_profile
           deno fmt lock.json
+          deno coverage --unstable cov_profile
 
       - name: change-check
         id: change-check

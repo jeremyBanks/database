@@ -37,47 +37,51 @@ for (
     ],
   ] as const
 ) {
-  Deno.test(`${name}: create, count, commit`, async () => {
-    const connector = await openConnector();
-    const connection = await connector.connect();
-    const transaction = await connection.startTransaction();
+  Deno.test({
+    name: `${name}: create, count, commit`,
+    ignore: /: server/.test(name),
+    async fn() {
+      const connector = await openConnector();
+      const connection = await connector.connect();
+      const transaction = await connection.startTransaction();
 
-    await (await transaction.prepareStatement(`
+      await (await transaction.prepareStatement(`
       DROP TABLE IF EXISTS User
     `)).exec();
 
-    await (await transaction.prepareStatement(`
+      await (await transaction.prepareStatement(`
       CREATE TABLE User (
         Id INTEGER PRIMARY KEY,
         Name TEXT UNIQUE
       )
     `)).exec();
 
-    const insertUserName = await transaction.prepareStatement(
-      "INSERT INTO User (Name) VALUES (?)",
-    );
-    await insertUserName.exec(["Alice"]);
-    await insertUserName.exec(["Bob"]);
-    await insertUserName.exec(["Charlie"]);
-    await insertUserName.exec(["David"]);
+      const insertUserName = await transaction.prepareStatement(
+        "INSERT INTO User (Name) VALUES (?)",
+      );
+      await insertUserName.exec(["Alice"]);
+      await insertUserName.exec(["Bob"]);
+      await insertUserName.exec(["Charlie"]);
+      await insertUserName.exec(["David"]);
 
-    const selectUserCount = await transaction.prepareStatement(
-      "SELECT COUNT(*) FROM User",
-    );
-    const [count] = (await selectUserCount.queryRow())!;
+      const selectUserCount = await transaction.prepareStatement(
+        "SELECT COUNT(*) FROM User",
+      );
+      const [count] = (await selectUserCount.queryRow())!;
 
-    asserts.assertEquals(count, 4);
+      asserts.assertEquals(count, 4);
 
-    await transaction.commit();
+      await transaction.commit();
 
-    const transaction2 = await connection.startTransaction();
-    const insertEdward = await transaction.prepareStatement(
-      "INSERT INTO User (Name) VALUES ('Edward')",
-    );
-    await insertEdward.exec();
+      const transaction2 = await connection.startTransaction();
+      const insertEdward = await transaction.prepareStatement(
+        "INSERT INTO User (Name) VALUES ('Edward')",
+      );
+      await insertEdward.exec();
 
-    await transaction2.rollback();
+      await transaction2.rollback();
 
-    await connection.close();
+      await connection.close();
+    },
   });
 }
