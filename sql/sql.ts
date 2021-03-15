@@ -561,12 +561,12 @@ async function doQuery<
       ? await context.cancelling(driverConnection.lastInsertedId())
       : driverConnection.lastInsertedIdSync
       ? driverConnection.lastInsertedIdSync()
-      : throwMissingImplementation("Connection.lastInsertedId[Sync]");
+      : undefined;
     const affectedRows = driverConnection.affectedRows
       ? await context.cancelling(driverConnection.affectedRows())
       : driverConnection.affectedRowsSync
       ? driverConnection.affectedRowsSync()
-      : throwMissingImplementation("Connection.affectedRows[Sync]");
+      : undefined;
 
     return new ResultChanges(lastInsertedId, affectedRows);
   }

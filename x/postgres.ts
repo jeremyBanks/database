@@ -38,7 +38,9 @@ export class Connector implements driver.Connector<Meta> {
 }
 
 export class Connection implements driver.Connection<Meta> {
-  constructor(private readonly innerClient: postgres.Client) {}
+  constructor(
+    private readonly innerClient: postgres.Client,
+  ) {}
 
   async query(
     sqlString: string,
@@ -52,14 +54,59 @@ export class Connection implements driver.Connection<Meta> {
     return new ResultRows(rowIterator);
   }
 
-  // startTransaction() {
-  //   this.innerClient.query("BEGIN DEFERRED TRANSACTION").return();
-  //   const transaction = new Transaction(this.innerClient);
-  //   return transaction;
-  // }
+  async startTransaction() {
+    await this.innerClient.queryArray("BEGIN TRANSACTION");
+    const transaction = new Transaction(this.innerClient);
+    return transaction;
+  }
 
   async close() {
     await this.innerClient.end();
+  }
+}
+
+export class Transaction implements driver.Transaction<Meta> {
+  constructor(
+    private readonly innerClient: postgres.Client,
+    private readonly depth: number = 1,
+  ) {}
+
+  async query(
+    sqlString: string,
+    args: Array<BoundValue>,
+  ) {
+    const result = await this.innerClient.queryArray<ResultValue[]>(
+      sqlString,
+      ...args,
+    );
+    const rowIterator = result.rows[Symbol.iterator]();
+    return new ResultRows(rowIterator);
+  }
+
+  async startTransaction() {
+    // Depth is a unique identifier because there can not be multiple concurrent
+    // transactions at the same depth in the same connection in Postgres.
+    await this.innerClient.queryArray(`SAVEPOINT TRANSACTION_${this.depth}`);
+    const transaction = new Transaction(this.innerClient, this.depth + 1);
+    return transaction;
+  }
+
+  async commit() {
+    if (this.depth === 1) {
+      await this.innerClient.queryArray("COMMIT TRANSACTION");
+    } else {
+      await this.innerClient.queryArray(`RELEASE TRANSACTION_${this.depth}`);
+    }
+  }
+
+  async rollback() {
+    if (this.depth === 1) {
+      await this.innerClient.queryArray("ROLLBACK TRANSACTION");
+    } else {
+      await this.innerClient.queryArray(
+        `ROLLBACK TO TRANSACTION_${this.depth}`,
+      );
+    }
   }
 }
 

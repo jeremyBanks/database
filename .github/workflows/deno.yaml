@@ -59,6 +59,7 @@ jobs:
           deno test --unstable --allow-read=. --allow-write=. --lock=lock.json --lock-write --coverage=cov_profile
           deno fmt lock.json
           deno coverage --unstable cov_profile
+          deno coverage --unstable cov_profile --lcov > cov_profile.lcov
 
       - name: change-check
         id: change-check

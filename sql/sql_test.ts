@@ -39,25 +39,25 @@ for (
 ) {
   Deno.test({
     name: `${name}: create, count, commit`,
-    ignore: /: server/.test(name),
+    ignore: /mysql/.test(name),
     async fn() {
       const connector = await openConnector();
       const connection = await connector.connect();
       const transaction = await connection.startTransaction();
 
       await (await transaction.prepareStatement(`
-      DROP TABLE IF EXISTS User
+      DROP TABLE IF EXISTS "User"
     `)).exec();
 
       await (await transaction.prepareStatement(`
-      CREATE TABLE User (
+      CREATE TABLE "User" (
         Id INTEGER PRIMARY KEY,
         Name TEXT UNIQUE
       )
     `)).exec();
 
       const insertUserName = await transaction.prepareStatement(
-        "INSERT INTO User (Name) VALUES (?)",
+        `INSERT INTO "User" (Name) VALUES ($1)`,
       );
       await insertUserName.exec(["Alice"]);
       await insertUserName.exec(["Bob"]);
@@ -65,7 +65,7 @@ for (
       await insertUserName.exec(["David"]);
 
       const selectUserCount = await transaction.prepareStatement(
-        "SELECT COUNT(*) FROM User",
+        `SELECT COUNT(*) FROM "User"`,
       );
       const [count] = (await selectUserCount.queryRow())!;
 
@@ -75,7 +75,7 @@ for (
 
       const transaction2 = await connection.startTransaction();
       const insertEdward = await transaction.prepareStatement(
-        "INSERT INTO User (Name) VALUES ('Edward')",
+        `INSERT INTO "User" (Name) VALUES ('Edward')`,
       );
       await insertEdward.exec();
 
