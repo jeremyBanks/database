@@ -39,16 +39,7 @@ jobs:
           echo "DENO_INSTALL=${DENO_INSTALL}" >> "${GITHUB_ENV}"
           echo "PATH=${PATH}" >> "${GITHUB_ENV}"
 
-      - name: build
-        id: build
-        run: |
-          deno fmt
-
-          git status
-          declare had_changes="$(
-            [[ -n "$(git status --porcelain)" ]] && echo true || echo false
-          )"
-          echo "::set-output name=had-changes::${had_changes}"
+      - run: deno fmt
 
       - name: validate ./VERSION
         run: |
@@ -64,10 +55,21 @@ jobs:
             }
           ' "${version}"
 
-      - run: deno test --allow-read=. --allow-write=.
+      - run: |
+          deno test --allow-read=. --allow-write=. --lock=lock.json --lock-write
+          deno fmt lock.json
+
+      - name: change-check
+        id: change-check
+        run: |
+          git status
+          declare had_changes="$(
+            [[ -n "$(git status --porcelain)" ]] && echo true || echo false
+          )"
+          echo "::set-output name=had-changes::${had_changes}"
 
       - name: commit and push generated changes
-        if: success() && steps.build.outputs.had-changes == 'true' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        if: success() && steps.change-check.outputs.had-changes == 'true' && (github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         run: |
           declare br="
           "
@@ -100,7 +102,7 @@ jobs:
           git push --set-upstream origin "${branch}"
 
       - name: fail if source files modified during build but this action cannot push
-        if: success() && steps.build.outputs.had-changes == 'true' && !(github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        if: success() && steps.change-check.outputs.had-changes == 'true' && !(github.event_name == 'push' || github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
         run: |
           echo "source files modified during build but this action cannot push"
           git status
