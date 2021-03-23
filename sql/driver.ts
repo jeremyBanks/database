@@ -40,6 +40,7 @@ export interface ConnectorOpener<Meta extends MetaBase = MetaBase> {
   openConnector?(
     path: string,
   ): Promise<Connector<Meta>>;
+
   /**
   Prepares a connector object that can be used to make connections to a
   database with the given path.
@@ -68,40 +69,6 @@ export interface Connector<Meta extends MetaBase = MetaBase> {
 
 export interface Connection<Meta extends MetaBase = MetaBase>
   extends TransactionStarter<Meta>, Queryer<Meta> {
-  /**
-  The primary key of the last row inserted through this connection. If the
-  last query did not insert a row, the result of this method may be a stale
-  value or `undefined`.
-
-  May throw `DatabaseConnectivityError`.
-  */
-  lastInsertedId?(): Promise<Meta["ResultValue"] | undefined>;
-  /**
-  The primary key of the last row inserted through this connection. If the
-  last query did not insert a row, the result of this method may be a stale
-  value or `undefined`.
-
-  May throw `DatabaseConnectivityError`.
-  */
-  lastInsertedIdSync?(): Meta["ResultValue"] | undefined;
-
-  /**
-  The number of rows affected by the last query through this connection. If
-  the last query was of a type that could not affect any rows, the result of
-  this method may be a stale value or undefined.
-
-  May throw `DatabaseConnectivityError`.
-  */
-  affectedRows?(): Promise<number | undefined>;
-  /**
-  The number of rows affected by the last query through this connection. If
-  the last query was of a type that could not affect any rows, the result of
-  this method may be a stale value or undefined.
-
-  May throw `DatabaseConnectivityError`.
-  */
-  affectedRowsSync?(): number | undefined;
-
   /**
   Close the connection, blocking until it is closed.
 
@@ -213,6 +180,7 @@ export interface Queryer<Meta extends MetaBase = MetaBase> {
     query: string,
     values: Array<Meta["BoundValue"]>,
   ): Promise<ResultRows>;
+
   /**
   Executes a query, returning the results as an Iterable of Iterable
   rows of ResultValues. These iterables must not be used after the

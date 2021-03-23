@@ -1,7 +1,5 @@
 import * as postgres from "https://deno.land/x/postgres@v0.8.0/mod.ts";
 
-import { notImplemented } from "../_common/assertions.ts";
-
 import * as driver from "../sql/driver.ts";
 
 type Json = number | string | null | JsonArray | JsonRecord;

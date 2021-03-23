@@ -1,12 +1,15 @@
 {
-  "dockerFile": "Dockerfile",
+  "dockerComposeFile": "docker-compose.yaml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
   "extensions": [
     "akamud.vscode-theme-onelight",
     "bierner.github-markdown-preview",
     "denoland.vscode-deno",
     "eamodio.gitlens",
     "ms-vscode.theme-1337",
-    "tyriar.sort-lines"
+    "tyriar.sort-lines",
+    "vsls-contrib.codetour"
   ],
   "settings": {
     "deno.codeLens.implementations": true,

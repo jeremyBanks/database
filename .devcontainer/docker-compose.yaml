@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+  app:
+    build:
+      context: ..
+      dockerfile: ".devcontainer/Dockerfile"
+    volumes:
+      - "..:/workspace"
+    user: "codespace"
+    command: "sleep infinity"
+    depends_on:
+      - "postgres"
+      - "mysql"
+    environment:
+      PGHOST: "postgres"
+      PGPORT: 5432
+      PGDATABASE: "postgres"
+      PGUSER: "codespace"
+      PGPASSWORD: "postgres"
+
+      MYSQL_HOST: "mysql"
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: "mysql"
+      MYSQL_USER: "codespace"
+      MYSQL_PWD: "mysql"
+
+  postgres:
+    image: "postgres:12"
+    restart: "unless-stopped"
+    ports:
+      - "5432:5432"
+    volumes:
+      - "postgres-volume:/var/lib/postgresql/data"
+    environment:
+      POSTGRES_PORT: 5432
+      POSTGRES_DATABASE: "postgres"
+      POSTGRES_USER: "codespace"
+      POSTGRES_PASSWORD: "postgres"
+
+  mysql:
+    image: "mysql:8"
+    restart: "unless-stopped"
+    ports:
+      - "3306:3306"
+    volumes:
+      - "mysql-volume:/var/lib/mysql"
+    environment:
+      MYSQL_ROOT_PASSWORD: "mysql"
+      MYSQL_TCP_PORT: 3306
+      MYSQL_DATABASE: "mysql"
+      MYSQL_USER: "codespace"
+      MYSQL_PASSWORD: "mysql"
+
+volumes:
+  postgres-volume:
+  mysql-volume:

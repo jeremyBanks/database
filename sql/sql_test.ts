@@ -1,13 +1,10 @@
 import { asserts } from "../_common/deps.ts";
-import { as, assertStatic } from "../_common/typing.ts";
-import { ThenType } from "../_common/_typing/shopify.ts";
 
 import * as sqlite from "../x/sqlite.ts";
 import * as postgres from "../x/postgres.ts";
 import * as mysql from "../x/mysql.ts";
 
 import * as sql from "./sql.ts";
-import * as driver from "./driver.ts";
 
 for (
   const [name, openConnector] of [
