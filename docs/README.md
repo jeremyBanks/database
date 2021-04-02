@@ -1,7 +1,5 @@
 # Docs
 
-<img src="../icon.png" height="64" align="right">
-
 Generated API documentation is available on Deno Doc:
 
 - [x/database/sql/sql.ts](https://doc.deno.land/https/deno.land/x/database/sql.ts)

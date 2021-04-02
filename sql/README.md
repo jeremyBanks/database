@@ -1,7 +1,5 @@
 # x/database/sql
 
-<img src="../icon.png" height="64" align="right">
-
 https://deno.land/x/database@0.1.0/sql
 
 **x/database/sql** provides an abstract TypeScript interface for SQL databases

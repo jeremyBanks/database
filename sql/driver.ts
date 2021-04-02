@@ -68,7 +68,7 @@ export interface Connector<Meta extends MetaBase = MetaBase> {
 }
 
 export interface Connection<Meta extends MetaBase = MetaBase>
-  extends TransactionStarter<Meta>, Queryer<Meta> {
+  extends TransactionStarter<Meta> {
   /**
   Close the connection, blocking until it is closed.
 
@@ -103,7 +103,7 @@ export interface Connection<Meta extends MetaBase = MetaBase>
 }
 
 export interface Transaction<Meta extends MetaBase = MetaBase>
-  extends TransactionStarter<Meta>, Queryer<Meta> {
+  extends TransactionStarter<Meta> {
   /**
   Closes this `Transaction` and any child `Transaction`s, with any changes
   committed and saved.
