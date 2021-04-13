@@ -1,4 +1,4 @@
-import * as mysql from "https://deno.land/x/mysql@v2.8.0/mod.ts";
+import * as mysql from "https://deno.land/x/mysql/mod.ts";
 
 import * as driver from "../sql/driver.ts";
 import * as errors from "../sql/errors.ts";

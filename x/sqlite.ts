@@ -1,4 +1,4 @@
-import * as sqlite from "https://deno.land/x/sqlite@v2.4.0/mod.ts";
+import * as sqlite from "https://deno.land/x/sqlite/mod.ts";
 
 import * as driver from "../sql/driver.ts";
 

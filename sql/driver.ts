@@ -68,7 +68,7 @@ export interface Connector<Meta extends MetaBase = MetaBase> {
 }
 
 export interface Connection<Meta extends MetaBase = MetaBase>
-  extends TransactionStarter<Meta> {
+  extends TransactionStarter<Meta>, StatementPreparer<Meta> {
   /**
   Close the connection, blocking until it is closed.
 
@@ -103,7 +103,7 @@ export interface Connection<Meta extends MetaBase = MetaBase>
 }
 
 export interface Transaction<Meta extends MetaBase = MetaBase>
-  extends TransactionStarter<Meta> {
+  extends TransactionStarter<Meta>, StatementPreparer<Meta> {
   /**
   Closes this `Transaction` and any child `Transaction`s, with any changes
   committed and saved.
@@ -170,12 +170,14 @@ export interface TransactionStarter<Meta extends MetaBase = MetaBase> {
   startTransactionSync?(): Transaction<Meta>;
 }
 
-export interface Queryer<Meta extends MetaBase = MetaBase> {
-  /**
-  Executes a query, returning the results as an AsyncIterable of Iterable
-  rows of ResultValues. These iterables must not be used after the
-  associated transaction, if any, has ended.
-  */
+export interface StatementPreparer<Meta extends MetaBase = MetaBase> {
+  /** Prepares a statement */
+  prepare?(
+    query: string,
+  ): Promise<PreparedStatement<Meta>>;
+}
+
+export interface PreparedStatement<Meta extends MetaBase = MetaBase> {
   query?(
     query: string,
     values: Array<Meta["BoundValue"]>,

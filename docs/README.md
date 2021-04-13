@@ -10,3 +10,7 @@ decisions, but note their dates as things may have changed since they were
 written:
 
 - [x/database/sql for Deno, Version 0.1](./rfcs/0003-initial.md)
+
+![](./client.drawio.svg)
+
+![](./driver.drawio.svg)

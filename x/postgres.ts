@@ -1,4 +1,4 @@
-import * as postgres from "https://deno.land/x/postgres@v0.8.0/mod.ts";
+import * as postgres from "https://deno.land/x/postgres/mod.ts";
 
 import * as driver from "../sql/driver.ts";
 
