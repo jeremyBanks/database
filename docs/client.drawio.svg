@@ -1,23 +1,198 @@
-<svg host="65bd71144e" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="121px" height="81px" viewBox="-0.5 -0.5 121 81" content="&lt;mxfile&gt;&lt;diagram id=&quot;Sa1143c1PimuDVP2S3Cn&quot; name=&quot;Page-1&quot;&gt;jZKxcoMwDIafxjvgNsecNEmXTgydXVvBvhrMOSZAn74ilgNcrndlwfr0yxI/YvzQjGcvOv3hFFhWZGpk/I0VRZ7lL/iayRTJrtxFUHujSLSAyvxAqiTaGwXXjTA4Z4PptlC6tgUZNkx474at7OLstmsnauqYLaCSwsKT7NOooCMtX1fqdzC1Tp3zjDJfQn7X3vUt9WMFv9yfmG5Euov0Vy2UG1aIHxk/eOdCPDXjAezsbbIt1p3+yD7m9tCG/xQUseAmbE+fzviJRgtTsgNr0HkM9jhvN0NpXY9X7AdtAlSdkDMccBmQ6dBYjHI8Po9DE97ABxhXiMY7g2sg+AklKZtMp1UqKRyW/5InN/XqnySdoFWoHzcvduCBHEnh4vw9t1pvfvwF&lt;/diagram&gt;&lt;/mxfile&gt;" style="background-color: rgb(255, 255, 255);">
-    <defs/>
+<svg host="65bd71144e" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" width="621px" height="487px" viewBox="-0.5 -0.5 621 487" content="&lt;mxfile&gt;&lt;diagram id=&quot;Sa1143c1PimuDVP2S3Cn&quot; name=&quot;UML&quot;&gt;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&lt;/diagram&gt;&lt;/mxfile&gt;" style="background-color: rgb(255, 255, 255);">
+    <defs>
+        <clipPath id="mx-clip-4-31-302-24-0">
+            <rect x="4" y="31" width="302" height="24"/>
+        </clipPath>
+        <clipPath id="mx-clip-4-151-192-24-0">
+            <rect x="4" y="151" width="192" height="24"/>
+        </clipPath>
+        <clipPath id="mx-clip-4-183-192-24-0">
+            <rect x="4" y="183" width="192" height="24"/>
+        </clipPath>
+        <clipPath id="mx-clip-4-215-192-40-0">
+            <rect x="4" y="215" width="192" height="40"/>
+        </clipPath>
+        <clipPath id="mx-clip-4-310-272-24-0">
+            <rect x="4" y="310" width="272" height="24"/>
+        </clipPath>
+        <clipPath id="mx-clip-4-342-272-22-0">
+            <rect x="4" y="342" width="272" height="22"/>
+        </clipPath>
+        <clipPath id="mx-clip-4-372-272-22-0">
+            <rect x="4" y="372" width="272" height="22"/>
+        </clipPath>
+        <clipPath id="mx-clip-4-402-272-22-0">
+            <rect x="4" y="402" width="272" height="22"/>
+        </clipPath>
+        <clipPath id="mx-clip-4-432-272-24-0">
+            <rect x="4" y="432" width="272" height="24"/>
+        </clipPath>
+        <clipPath id="mx-clip-324-310-272-24-0">
+            <rect x="324" y="310" width="272" height="24"/>
+        </clipPath>
+        <clipPath id="mx-clip-324-342-272-22-0">
+            <rect x="324" y="342" width="272" height="22"/>
+        </clipPath>
+        <clipPath id="mx-clip-324-372-272-22-0">
+            <rect x="324" y="372" width="272" height="22"/>
+        </clipPath>
+        <clipPath id="mx-clip-324-402-272-22-0">
+            <rect x="324" y="402" width="272" height="22"/>
+        </clipPath>
+        <clipPath id="mx-clip-324-432-272-24-0">
+            <rect x="324" y="432" width="272" height="24"/>
+        </clipPath>
+        <clipPath id="mx-clip-324-464-272-24-0">
+            <rect x="324" y="464" width="272" height="24"/>
+        </clipPath>
+    </defs>
     <g>
-        <path d="M 30 20 C 6 20 0 40 19.2 44 C 0 52.8 21.6 72 37.2 64 C 48 80 84 80 96 64 C 120 64 120 48 105 40 C 120 24 96 8 75 16 C 60 4 36 4 30 20 Z" fill="#ffffff" stroke="#000000" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 310 26 L 310 11.7 Q 310 0 298.3 0 L 11.7 0 Q 0 0 0 11.7 L 0 26" fill="#ffffff" stroke="#000000" stroke-miterlimit="10" pointer-events="all"/>
+        <path d="M 0 26 L 0 38.3 Q 0 50 11.7 50 L 298.3 50 Q 310 50 310 38.3 L 310 26" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 0 26 L 310 26" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/>
+        <g fill="#000000" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="12px">
+            <text x="154.5" y="17.5">
+                https://deno.land/x/database/mod.ts
+            </text>
+        </g>
+        <g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-4-31-302-24-0)" font-size="12px">
+            <text x="5.5" y="43.5">
+                open(db: string, driver: Driver Module): Database
+            </text>
+        </g>
+        <path d="M 200 146 L 200 131.7 Q 200 120 188.3 120 L 11.7 120 Q 0 120 0 131.7 L 0 146" fill="#ffffff" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 0 146 L 0 238.3 Q 0 250 11.7 250 L 188.3 250 Q 200 250 200 238.3 L 200 146" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 0 146 L 200 146" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/>
+        <g fill="#000000" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="12px">
+            <text x="99.5" y="137.5">
+                Database
+            </text>
+        </g>
+        <g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-4-151-192-24-0)" font-size="12px">
+            <text x="5.5" y="163.5">
+                connect(): Connection
+            </text>
+        </g>
+        <path d="M 0 174 L 200 174" fill="none" stroke="#000000" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="none"/>
+        <g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-4-183-192-24-0)" font-size="12px">
+            <text x="5.5" y="195.5">
+                dispose(): void
+            </text>
+        </g>
+        <path d="M 0 206 L 200 206" fill="none" stroke="#000000" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="none"/>
+        <g fill="#000000" font-family="Helvetica" font-style="italic" pointer-events="none" clip-path="url(#mx-clip-4-215-192-40-0)" font-size="12px">
+            <text x="5.5" y="227.5">
+                every method of Connection is also
+            </text>
+            <text x="5.5" y="241.5">
+                available on Database
+            </text>
+        </g>
+        <path d="M 310 38 Q 330 38 330 61.5 Q 330 85 215 85 Q 100 85 100 113.63" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 100 118.88 L 96.5 111.88 L 100 113.63 L 103.5 111.88 Z" fill="#000000" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/>
+        <rect x="340" y="0" width="220" height="120" fill="#ffffff" stroke="none" pointer-events="none"/>
         <g transform="translate(-0.5 -0.5)">
             <switch>
                 <foreignObject style="overflow: visible; text-align: left;" pointer-events="none" width="100%" height="100%" requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility">
-                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe center; justify-content: unsafe center; width: 118px; height: 1px; padding-top: 40px; margin-left: 1px;">
-                        <div style="box-sizing: border-box; font-size: 0; text-align: center; ">
-                            <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: all; white-space: normal; word-wrap: normal; ">
-                                ?
+                    <div xmlns="http://www.w3.org/1999/xhtml" style="display: flex; align-items: unsafe flex-start; justify-content: unsafe flex-start; width: 206px; height: 1px; padding-top: 13px; margin-left: 348px;">
+                        <div style="box-sizing: border-box; font-size: 0; text-align: left; ">
+                            <div style="display: inline-block; font-size: 12px; font-family: Helvetica; color: #000000; line-height: 1.2; pointer-events: none; white-space: normal; word-wrap: normal; ">
+                                The open() function is the entry point for the rest of the module, creating a "Database" connection pool for a given connection string and compatible database driver module. Most methods are async, but Promise types are omitted here for brevity.
                             </div>
                         </div>
                     </div>
                 </foreignObject>
-                <text x="60" y="44" fill="#000000" font-family="Helvetica" font-size="12px" text-anchor="middle">
-                    ?
+                <text x="348" y="25" fill="#000000" font-family="Helvetica" font-size="12px">
+                    The open() function is the entry p...
                 </text>
             </switch>
         </g>
+        <path d="M 280 305 L 280 290.7 Q 280 279 268.3 279 L 11.7 279 Q 0 279 0 290.7 L 0 305" fill="#ffffff" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 0 305 L 0 439.3 Q 0 451 11.7 451 L 268.3 451 Q 280 451 280 439.3 L 280 305" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 0 305 L 280 305" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/>
+        <g fill="#000000" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="12px">
+            <text x="139.5" y="296.5">
+                Connection
+            </text>
+        </g>
+        <g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-4-310-272-24-0)" font-size="12px">
+            <text x="5.5" y="322.5">
+                start(): Transaction
+            </text>
+        </g>
+        <path d="M 0 333 L 280 333" fill="none" stroke="#000000" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="none"/>
+        <g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-4-342-272-22-0)" font-size="12px">
+            <text x="5.5" y="354.5">
+                query(sql, parameters): Rows
+            </text>
+        </g>
+        <path d="M 0 363 L 280 363" fill="none" stroke="#000000" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="none"/>
+        <g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-4-372-272-22-0)" font-size="12px">
+            <text x="5.5" y="384.5">
+                queryRecords(sql, parameters): RowRecords
+            </text>
+        </g>
+        <path d="M 0 393 L 280 393" fill="none" stroke="#000000" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="none"/>
+        <g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-4-402-272-22-0)" font-size="12px">
+            <text x="5.5" y="414.5">
+                queryChanges(sql, parameters): Changes
+            </text>
+        </g>
+        <path d="M 0 423 L 280 423" fill="none" stroke="#000000" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="none"/>
+        <g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-4-432-272-24-0)" font-size="12px">
+            <text x="5.5" y="444.5">
+                dispose(): void
+            </text>
+        </g>
+        <path d="M 600 305 L 600 290.7 Q 600 279 588.3 279 L 331.7 279 Q 320 279 320 290.7 L 320 305" fill="#ffffff" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 320 305 L 320 471.3 Q 320 483 331.7 483 L 588.3 483 Q 600 483 600 471.3 L 600 305" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 320 305 L 600 305" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/>
+        <g fill="#000000" font-family="Helvetica" font-weight="bold" pointer-events="none" text-anchor="middle" font-size="12px">
+            <text x="459.5" y="296.5">
+                Transaction
+            </text>
+        </g>
+        <path d="M 600 317 Q 620 317 620 288.5 Q 620 260 575 260 Q 530 260 530 272.63" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 530 277.88 L 526.5 270.88 L 530 272.63 L 533.5 270.88 Z" fill="#000000" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/>
+        <g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-324-310-272-24-0)" font-size="12px">
+            <text x="325.5" y="322.5">
+                start(): Transaction
+            </text>
+        </g>
+        <path d="M 320 333 L 600 333" fill="none" stroke="#000000" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="none"/>
+        <g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-324-342-272-22-0)" font-size="12px">
+            <text x="325.5" y="354.5">
+                query(sql, parameters): Rows
+            </text>
+        </g>
+        <path d="M 320 363 L 600 363" fill="none" stroke="#000000" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="none"/>
+        <g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-324-372-272-22-0)" font-size="12px">
+            <text x="325.5" y="384.5">
+                run(sql, parameters): void
+            </text>
+        </g>
+        <path d="M 320 393 L 600 393" fill="none" stroke="#000000" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="none"/>
+        <g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-324-402-272-22-0)" font-size="12px">
+            <text x="325.5" y="414.5">
+                changes(sql, parameters): Changes
+            </text>
+        </g>
+        <path d="M 320 423 L 600 423" fill="none" stroke="#000000" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="none"/>
+        <g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-324-432-272-24-0)" font-size="12px">
+            <text x="325.5" y="444.5">
+                commit(): void
+            </text>
+        </g>
+        <path d="M 320 455 L 600 455" fill="none" stroke="#000000" stroke-miterlimit="10" stroke-dasharray="3 3" pointer-events="none"/>
+        <g fill="#000000" font-family="Helvetica" pointer-events="none" clip-path="url(#mx-clip-324-464-272-24-0)" font-size="12px">
+            <text x="325.5" y="476.5">
+                rollback(): void
+            </text>
+        </g>
+        <path d="M 280 317 Q 300 317 300 288 Q 300 259 380 259 Q 460 259 460 272.63" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 460 277.88 L 456.5 270.88 L 460 272.63 L 463.5 270.88 Z" fill="#000000" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 200 158 Q 220 158 220 209 Q 220 260 180 260 Q 140 260 140 272.63" fill="none" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/>
+        <path d="M 140 277.88 L 136.5 270.88 L 140 272.63 L 143.5 270.88 Z" fill="#000000" stroke="#000000" stroke-miterlimit="10" pointer-events="none"/>
     </g>
     <switch>
         <g requiredFeatures="http://www.w3.org/TR/SVG11/feature#Extensibility"/>
